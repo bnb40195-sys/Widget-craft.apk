@@ -159,7 +159,7 @@ fun AiImageWidgetStudioScreen(
             delay(350)
 
             analysisProgressValue = 0.95f
-            analysisProgressText = "بناء هيكل الويدجت التفاعلي أوفلاين..."
+            analysisProgressText = "بناء هيكل الويدجت التفاعلي بدون نت..."
             delay(250)
 
             val result = if (loadedBitmap != null) {
@@ -284,7 +284,7 @@ fun AiImageWidgetStudioScreen(
                                     color = Color(0xFF10B981).copy(alpha = 0.25f)
                                 ) {
                                     Text(
-                                        text = "أوفلاين 100%",
+                                        text = "100% بدون نت",
                                         color = Color(0xFF34D399),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
@@ -634,7 +634,7 @@ fun AiImageWidgetStudioScreen(
                                     color = Color(0xFF10B981).copy(alpha = 0.2f)
                                 ) {
                                     Text(
-                                        text = "أوفلاين بدون نت",
+                                        text = "100% بدون نت",
                                         color = Color(0xFF34D399),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
@@ -733,7 +733,7 @@ fun AiImageWidgetStudioScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isSavedLocally) "تم الحفظ والتثبيت على شاشة الهاتف أوفلاين 📌" else "حفظ وتثبيت على الشاشة الرئيسية أوفلاين 📌",
+                                        text = if (isSavedLocally) "تم الحفظ والتثبيت على شاشة الهاتف محلياً 📌" else "حفظ وتثبيت على الشاشة الرئيسية بدون نت 📌",
                                         color = if (isSavedLocally) Color(0xFF34D399) else DarkBackground,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
@@ -821,7 +821,7 @@ fun AiImageWidgetStudioScreen(
                                     color = Color(0xFF10B981).copy(alpha = 0.2f)
                                 ) {
                                     Text(
-                                        text = "أوفلاين 100%",
+                                        text = "100% بدون نت",
                                         color = Color(0xFF34D399),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,

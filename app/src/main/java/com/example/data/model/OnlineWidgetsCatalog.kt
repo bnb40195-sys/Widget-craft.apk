@@ -38,7 +38,7 @@ object OnlineWidgetsCatalog {
             id = "pub_ai_vision_monochrome",
             titleAr = "ساعة تايبوغرافي مستخرجة بالذكاء الاصطناعي",
             titleEn = "AI Vision Extracted Minimal Monochrome Clock",
-            description = "تمت مطابقة هذا التصميم وتحليله بالكامل من صورة خارجية عبر الذكاء الاصطناعي مع استخراج الألوان وتوليد ويدجت يعمل أوفلاين 100% بدون نت.",
+            description = "تمت مطابقة هذا التصميم وتحليله بالكامل من صورة خارجية عبر الذكاء الاصطناعي مع استخراج الألوان وتوليد ويدجت يعمل 100% بدون نت.",
             publisherName = "استوديو الذكاء الاصطناعي (AI Studio)",
             publisherCountry = "🇩🇿 الجزائر",
             publishDate = "منذ ساعة",
@@ -51,7 +51,7 @@ object OnlineWidgetsCatalog {
             widgetConfig = WidgetConfig(
                 id = "online_ai_monochrome",
                 name = "ساعة تايبوغرافي بالذكاء الاصطناعي",
-                tagline = "مطابقة ذكية أوفلاين بدون نت",
+                tagline = "مطابقة ذكية 100% بدون نت",
                 type = WidgetType.DIGITAL_CLOCK,
                 theme = WidgetTheme.MINIMAL_WHITE,
                 cornerRadiusDp = 22,
@@ -79,7 +79,7 @@ object OnlineWidgetsCatalog {
             widgetConfig = WidgetConfig(
                 id = "online_ai_cyber_pulse",
                 name = "رادار نيون بالذكاء الاصطناعي",
-                tagline = "طقس وحرارة مطابقة ذكياً أوفلاين",
+                tagline = "طقس وحرارة مطابقة ذكياً بدون نت",
                 type = WidgetType.WEATHER_TEMP,
                 theme = WidgetTheme.CYBER_NEON,
                 cornerRadiusDp = 24,
@@ -426,8 +426,8 @@ object OnlineWidgetsCatalog {
         ),
         OnlinePublishedWidget(
             id = "pub_weather_live_temp",
-            titleAr = "رادار الطقس والحرارة أوفلاين",
-            titleEn = "Offline Live Weather & Temp Radar",
+            titleAr = "رادار الطقس والحرارة المباشر",
+            titleEn = "Live Weather & Temp Radar",
             description = "مؤشر حرارة فوري مع حالة الطقس ونسبة الرطوبة ومعدل سرعة الرياح وتوقعات اليوم بألوان زجاجية معتمة حديثة.",
             publisherName = "فريق الأرصاد الذكية",
             publisherCountry = "🇩🇿 الجزائر",
@@ -568,7 +568,7 @@ object OnlineWidgetsCatalog {
                 // Default high-profile Widgetopia curation
                 Quint(
                     "ويدجت مستورد من Widgetopia",
-                    "تصميم عالمي مفلتر ومحفوظ أوفلاين بدون نت",
+                    "تصميم عالمي مفلتر ومحفوظ محلياً بدون نت",
                     WidgetType.DIGITAL_CLOCK,
                     WidgetTheme.OLED_MIDNIGHT,
                     WidgetSize.MEDIUM_4x2

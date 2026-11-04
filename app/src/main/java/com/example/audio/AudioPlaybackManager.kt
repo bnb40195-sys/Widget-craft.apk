@@ -136,7 +136,7 @@ object AudioPlaybackManager {
         try {
             _currentTrackTitle.value = title
             _currentReciter.value = "تسجيل صوتي خارجي"
-            _currentAyahText.value = "تشغيل ملف صوتي من الهاتف أوفلاين"
+            _currentAyahText.value = "تشغيل ملف صوتي من الهاتف بدون نت"
 
             mediaPlayer = MediaPlayer().apply {
                 setDataSource(context.applicationContext, uri)

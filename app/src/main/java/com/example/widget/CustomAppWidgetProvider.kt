@@ -107,7 +107,7 @@ class CustomAppWidgetProvider : AppWidgetProvider() {
                 views.setViewVisibility(R.id.widget_action_row, View.GONE)
             } else {
                 views.setTextViewText(R.id.widget_title, config.name)
-                views.setTextViewText(R.id.widget_badge, "أوفلاين 100%")
+                views.setTextViewText(R.id.widget_badge, "بدون نت 100%")
 
                 when (config.type) {
                     WidgetType.DIGITAL_CLOCK -> {
@@ -209,7 +209,7 @@ class CustomAppWidgetProvider : AppWidgetProvider() {
                     }
                     WidgetType.QURAN_AUDIO -> {
                         views.setTextViewText(R.id.widget_title, "القرآن الكريم بصوت")
-                        views.setTextViewText(R.id.widget_badge, "صوت أوفلاين 🔊")
+                        views.setTextViewText(R.id.widget_badge, "صوت مباشر 🔊")
                         views.setTextViewText(R.id.widget_main_value, config.quranSurahName)
                         views.setTextViewText(
                             R.id.widget_sub_value,
@@ -223,7 +223,7 @@ class CustomAppWidgetProvider : AppWidgetProvider() {
                         views.setTextViewText(R.id.widget_main_value, "واتساب • يوتيوب • تليجرام")
                         views.setTextViewText(
                             R.id.widget_sub_value,
-                            "إطلاق فوري وتطبيقات مزدوجة مخصصة أوفلاين"
+                            "إطلاق فوري وتطبيقات مزدوجة مخصصة"
                         )
                         views.setViewVisibility(R.id.widget_action_row, View.GONE)
                     }

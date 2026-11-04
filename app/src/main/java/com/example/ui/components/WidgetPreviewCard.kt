@@ -89,7 +89,11 @@ fun WidgetPreviewCard(
     onClick: (() -> Unit)? = null
 ) {
     val context = LocalContext.current
-    var liveStats by remember { mutableStateOf(DeviceStatsManager.getDeviceStats(context)) }
+    val is24Hour = remember(context) {
+        val prefs = context.getSharedPreferences("studio_prefs", android.content.Context.MODE_PRIVATE)
+        prefs.getBoolean("is_24_hour_format", false)
+    }
+    var liveStats by remember { mutableStateOf(DeviceStatsManager.getDeviceStats(context, is24Hour)) }
     var prayerSchedule by remember {
         mutableStateOf(
             IslamicTimeCalculator.calculatePrayerTimes(
@@ -109,7 +113,9 @@ fun WidgetPreviewCard(
     LaunchedEffect(config.cityName, config.cityLatitude) {
         while (true) {
             delay(1000)
-            liveStats = DeviceStatsManager.getDeviceStats(context)
+            val prefNow = context.getSharedPreferences("studio_prefs", android.content.Context.MODE_PRIVATE)
+            val current24 = prefNow.getBoolean("is_24_hour_format", false)
+            liveStats = DeviceStatsManager.getDeviceStats(context, current24)
             prayerSchedule = IslamicTimeCalculator.calculatePrayerTimes(
                 city = CityLocation(
                     name = config.cityName,
@@ -209,7 +215,7 @@ fun WidgetPreviewCard(
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = "أوفلاين",
+                            text = "نشط",
                             color = textColor.copy(alpha = 0.9f),
                             fontSize = 10.sp,
                             fontWeight = FontWeight.Medium,
@@ -291,7 +297,7 @@ fun WidgetPreviewCard(
                     WidgetType.DIGITAL_CLOCK -> {
                         val datePart = if (config.showDate) "${liveStats.currentDayNameAr}، ${liveStats.currentDateAr}" else ""
                         val batPart = if (config.showBattery) " • ⚡ ${liveStats.batteryPct}%" else ""
-                        "$datePart$batPart".ifEmpty { "أوفلاين بدون نت" }
+                        "$datePart$batPart".ifEmpty { "بدون إنترنت" }
                     }
                     WidgetType.BATTERY_DEVICE -> "ذاكرة RAM: ${liveStats.freeRamMb} MB متاحة"
                     WidgetType.QUICK_NOTES -> "تحديث مستمر محلياً"
@@ -826,7 +832,7 @@ private fun QuranAudioBody(config: WidgetConfig, textColor: Color, isInteractive
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = if (isPlaying) "جاري التشغيل..." else "أوفلاين",
+                        text = if (isPlaying) "جاري التشغيل..." else "جاهز",
                         color = if (isPlaying) Color(0xFF34D399) else textColor.copy(alpha = 0.7f),
                         fontSize = 10.sp,
                         fontWeight = FontWeight.Bold

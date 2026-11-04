@@ -71,6 +71,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val vaultPin = studioPrefs.vaultPin
     val notificationShortcutsEnabled = studioPrefs.notificationShortcutsEnabled
     val pinnedNotificationShortcuts = studioPrefs.pinnedNotificationShortcuts
+    val is24HourFormat = studioPrefs.is24HourFormat
+    val useArabicNumerals = studioPrefs.useArabicNumerals
+
+    fun toggle24HourFormat(enabled: Boolean) {
+        studioPrefs.set24HourFormat(enabled)
+        showToast(if (enabled) "تم التبديل إلى نظام 24 ساعة (00:00 - 23:59) ⏰" else "تم التبديل إلى نظام 12 ساعة (ص / م) ⏰")
+    }
+
+    fun toggleArabicNumerals() {
+        val current = studioPrefs.useArabicNumerals.value
+        val next = !current
+        studioPrefs.setUseArabicNumerals(next)
+        showToast(if (next) "تم تفعيل الأرقام العربية (١٢٣٤) في كامل التطبيق 🔢" else "تم تفعيل الأرقام الإنجليزية (1234) في كامل التطبيق 🔢")
+    }
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
@@ -205,7 +219,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             type = "text/plain"
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
-        val shareIntent = Intent.createChooser(sendIntent, "مشاركة كود الويدجت أوفلاين").apply {
+        val shareIntent = Intent.createChooser(sendIntent, "مشاركة كود الويدجت بدون نت").apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         getApplication<Application>().startActivity(shareIntent)
@@ -221,7 +235,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 updatedAt = System.currentTimeMillis()
             )
             repository.saveWidget(offlineConfig)
-            showToast("تم تنزيل \"${config.name}\" بنجاح! متاح أوفلاين 100% بدون نت ⚡")
+            showToast("تم تنزيل \"${config.name}\" بنجاح! متاح 100% بدون نت ⚡")
             onComplete?.invoke()
         }
     }
@@ -236,7 +250,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 updatedAt = System.currentTimeMillis()
             )
             repository.saveWidget(offlineConfig)
-            showToast("تم حفظ الويدجت المولد بالذكاء الاصطناعي بنجاح! متاح أوفلاين 100% 🪄")
+            showToast("تم حفظ الويدجت المولد بالذكاء الاصطناعي بنجاح! متاح 100% بدون نت 🪄")
             onComplete?.invoke()
         }
     }
@@ -269,20 +283,91 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun deleteShortcut(id: String) {
         studioPrefs.deleteShortcut(id)
+        if (notificationShortcutsEnabled.value) {
+            val context = getApplication<Application>()
+            NotificationShortcutsHelper.showOrUpdateNotificationShortcuts(
+                context,
+                shortcuts.value,
+                pinnedNotificationShortcuts.value
+            )
+        }
         showToast("تم حذف الاختصار")
+    }
+
+    fun toggleShortcutActive(id: String) {
+        studioPrefs.toggleShortcutActive(id)
+        if (notificationShortcutsEnabled.value) {
+            val context = getApplication<Application>()
+            NotificationShortcutsHelper.showOrUpdateNotificationShortcuts(
+                context,
+                shortcuts.value,
+                pinnedNotificationShortcuts.value
+            )
+        }
+        showToast("تم تحديث حالة تفعيل الاختصار ⚡")
+    }
+
+    fun setShortcutLayer(id: String, newLayer: Int) {
+        studioPrefs.setShortcutLayer(id, newLayer)
+        showToast("تم تغيير رقم الطبقة إلى $newLayer")
     }
 
     fun toggleHideShortcut(id: String) {
         studioPrefs.toggleHideShortcut(id)
     }
 
+    fun getInstalledApps(): List<AppShortcut> {
+        val context = getApplication<Application>()
+        val pm = context.packageManager
+        return try {
+            val intent = Intent(Intent.ACTION_MAIN, null).apply {
+                addCategory(Intent.CATEGORY_LAUNCHER)
+            }
+            val resolveInfos = pm.queryIntentActivities(intent, 0)
+            resolveInfos.mapNotNull { resolveInfo ->
+                val name = resolveInfo.loadLabel(pm).toString()
+                val pkg = resolveInfo.activityInfo.packageName
+                if (pkg == context.packageName) null
+                else {
+                    AppShortcut(
+                        id = "installed_${pkg}",
+                        name = name,
+                        customLabel = name,
+                        packageName = pkg,
+                        iconSymbol = "App",
+                        iconColor = 0xFF38BDF8
+                    )
+                }
+            }.distinctBy { it.packageName }.sortedBy { it.name }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
     fun launchAppShortcut(shortcut: AppShortcut) {
         val context = getApplication<Application>()
+        if (shortcut.externalUrl.isNotBlank()) {
+            try {
+                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(shortcut.externalUrl)).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(browserIntent)
+                showToast("فتح الرابط الخارجي: ${shortcut.displayLabel} 🌐")
+                return
+            } catch (e: Exception) {
+                showToast("تعذر فتح الرابط الخارجي: تأكد من كتابة الرابط بشكل صحيح")
+                return
+            }
+        }
         if (shortcut.packageName.isNotBlank()) {
             val launchIntent = context.packageManager.getLaunchIntentForPackage(shortcut.packageName)
             if (launchIntent != null) {
                 launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 context.startActivity(launchIntent)
+                showToast("تشغيل: ${shortcut.displayLabel} 🚀")
+                return
+            } else {
+                showToast("التطبيق (${shortcut.packageName}) غير مثبت على الهاتف")
                 return
             }
         }
@@ -294,7 +379,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val shortcutManager = context.getSystemService(android.content.pm.ShortcutManager::class.java)
             if (shortcutManager != null && shortcutManager.isRequestPinShortcutSupported) {
-                val launchIntent = if (shortcut.packageName.isNotBlank()) {
+                val launchIntent = if (shortcut.externalUrl.isNotBlank()) {
+                    Intent(Intent.ACTION_VIEW, Uri.parse(shortcut.externalUrl)).apply {
+                        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    }
+                } else if (shortcut.packageName.isNotBlank()) {
                     context.packageManager.getLaunchIntentForPackage(shortcut.packageName)
                         ?: Intent(context, com.example.MainActivity::class.java).apply {
                             action = Intent.ACTION_VIEW
@@ -401,9 +490,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             putExtra("EXTRA_ALERT_TITLE", alert.title)
             putExtra("EXTRA_ALERT_ID", alert.id)
             putExtra("EXTRA_VIBRATE", alert.vibrateEnabled)
+            putExtra("EXTRA_SOUND_ENABLED", alert.soundEnabled)
+            putExtra("EXTRA_SOUND_ID", alert.soundId)
         }
         context.sendBroadcast(intent)
-        showToast("تم إطلاق التنبيه التجريبي الآن 🔔")
+        showToast("تم إطلاق التنبيه التجريبي الآن: ${alert.soundTitle}")
     }
 
     private fun scheduleAlertSystem(alert: WidgetAlert) {
@@ -415,6 +506,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             putExtra("EXTRA_ALERT_TITLE", alert.title)
             putExtra("EXTRA_ALERT_ID", alert.id)
             putExtra("EXTRA_VIBRATE", alert.vibrateEnabled)
+            putExtra("EXTRA_SOUND_ENABLED", alert.soundEnabled)
+            putExtra("EXTRA_SOUND_ID", alert.soundId)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,

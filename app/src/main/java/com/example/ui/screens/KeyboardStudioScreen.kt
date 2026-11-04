@@ -180,7 +180,7 @@ fun KeyboardStudioScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "تشغيل وتوليد لوحة المفاتيح بالذكاء الاصطناعي أوفلاين",
+                            text = "تشغيل وتوليد لوحة المفاتيح بالذكاء الاصطناعي بدون نت",
                             fontSize = 11.sp,
                             color = PrimaryCyan
                         )
@@ -444,7 +444,7 @@ fun KeyboardStudioScreen(
                                                 color = if (isSelected) PrimaryCyan else TextPrimary
                                             )
                                             Text(
-                                                text = if (theme.backgroundImageUri != null) "سمة ذكاء اصطناعي بخلفية صورة 🪄" else if (theme.isCustomImported) "سمة مخصصة أوفلاين" else "سمة مدمجة",
+                                                text = if (theme.backgroundImageUri != null) "سمة ذكاء اصطناعي بخلفية صورة 🪄" else if (theme.isCustomImported) "سمة مخصصة بدون نت" else "سمة مدمجة",
                                                 fontSize = 11.sp,
                                                 color = TextSecondary
                                             )
@@ -506,7 +506,7 @@ fun KeyboardStudioScreen(
                                                 color = TextPrimary
                                             )
                                             Text(
-                                                text = "ارفع أي صورة ليقوم الذكاء بمطابقة تصميمها وتشغيلها (أوفلاين بدون نت)",
+                                                text = "ارفع أي صورة ليقوم الذكاء بمطابقة تصميمها وتشغيلها (100% بدون نت)",
                                                 fontSize = 11.sp,
                                                 color = Color(0xFFC084FC)
                                             )
@@ -612,7 +612,7 @@ fun KeyboardStudioScreen(
                                                 shape = RoundedCornerShape(6.dp)
                                             ) {
                                                 Text(
-                                                    text = "مطابق أوفلاين 100%",
+                                                    text = "مطابق 100% بدون نت",
                                                     color = Color(0xFF34D399),
                                                     fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold,

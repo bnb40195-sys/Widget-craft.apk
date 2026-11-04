@@ -586,7 +586,7 @@ fun WidgetEditorScreen(
                                                     tint = PrimaryCyan
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("جلب حكمة عشوائية من المكتبة الأوفلاين", color = TextPrimary)
+                                                Text("جلب حكمة عشوائية من المكتبة بدون نت", color = TextPrimary)
                                             }
                                         }
                                     }
@@ -655,7 +655,7 @@ fun WidgetEditorScreen(
 
                             WidgetType.PRAYER_TIMES, WidgetType.ISLAMIC_CALENDAR_CARD -> {
                                 item {
-                                    EditorCard(title = "إعدادات المدينة ومواقيت الصلاة الفلكية (أوفلاين 100%)") {
+                                    EditorCard(title = "إعدادات المدينة ومواقيت الصلاة الفلكية (100% بدون نت)") {
                                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             Text(
                                                 text = "المدينة المختارة: ${editingConfig.cityName}",
@@ -735,7 +735,7 @@ fun WidgetEditorScreen(
 
                             WidgetType.WEATHER_TEMP -> {
                                 item {
-                                    EditorCard(title = "إعدادات الطقس والحرارة (أوفلاين)") {
+                                    EditorCard(title = "إعدادات الطقس والحرارة (بدون نت)") {
                                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             OutlinedTextField(
                                                 value = editingConfig.cityName,

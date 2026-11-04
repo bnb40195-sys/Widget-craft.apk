@@ -10,13 +10,23 @@ import android.widget.Toast
 class ShortcutLaunchReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val packageName = intent.getStringExtra(EXTRA_PACKAGE_NAME)
+        val externalUrl = intent.getStringExtra(EXTRA_EXTERNAL_URL)
         val symbolAction = intent.getStringExtra(EXTRA_SYMBOL_ACTION)
         val label = intent.getStringExtra(EXTRA_LABEL) ?: "التطبيق"
 
         var launchIntent: Intent? = null
 
-        // Try package name first if provided
-        if (!packageName.isNullOrBlank()) {
+        // Try external URL first if provided
+        if (!externalUrl.isNullOrBlank()) {
+            try {
+                launchIntent = Intent(Intent.ACTION_VIEW, Uri.parse(externalUrl))
+            } catch (e: Exception) {
+                // fallback
+            }
+        }
+
+        // Try package name if no URL or URL failed
+        if (launchIntent == null && !packageName.isNullOrBlank()) {
             launchIntent = context.packageManager.getLaunchIntentForPackage(packageName)
         }
 
@@ -55,6 +65,7 @@ class ShortcutLaunchReceiver : BroadcastReceiver() {
     companion object {
         const val ACTION_LAUNCH = "com.example.ACTION_LAUNCH_SHORTCUT"
         const val EXTRA_PACKAGE_NAME = "EXTRA_PACKAGE_NAME"
+        const val EXTRA_EXTERNAL_URL = "EXTRA_EXTERNAL_URL"
         const val EXTRA_SYMBOL_ACTION = "EXTRA_SYMBOL_ACTION"
         const val EXTRA_LABEL = "EXTRA_LABEL"
     }

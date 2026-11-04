@@ -185,6 +185,6 @@ jobs:
           echo "- **File Size**: ${{ steps.prepare_apk.outputs.apk_size }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Commit**: \`${{ steps.prepare_apk.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📥 How to Download:" >> $GITHUB_STEP_SUMMARY
-          echo "1. Go to the **Releases** tab on your GitHub repository to download **WidgetCraft-debug.apk** directly to your phone." >> $GITHUB_STEP_SUMMARY
-          echo "2. Or download the build artifact **WidgetCraft-Debug-APK** from the bottom of this Action run page." >> $GITHUB_STEP_SUMMARY
+          echo "### 📥 How to Download & Install:" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Direct APK (Recommended)**: Go to the **Releases** tab on your GitHub repository to download **WidgetCraft-debug.apk** directly to your phone." >> $GITHUB_STEP_SUMMARY
+          echo "2. **Via Artifacts**: If downloading **WidgetCraft-Debug-APK** from the bottom of this Action page, remember GitHub packs it in a \`.zip\`. You MUST unzip/extract it first using your phone's File Manager before tapping the APK to avoid 'There was a problem parsing the package' error!" >> $GITHUB_STEP_SUMMARY

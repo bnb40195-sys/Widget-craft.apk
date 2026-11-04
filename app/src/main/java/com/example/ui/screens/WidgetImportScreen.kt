@@ -217,7 +217,7 @@ fun WidgetImportScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "يمكنك استيراد ويدجات قام أصدقاؤك بتصميمها أو تصديرها، وإعادة تعديلها وحفظها في تطبيقك واستخدامها أوفلاين.",
+                                text = "يمكنك استيراد ويدجات قام أصدقاؤك بتصميمها أو تصديرها، وإعادة تعديلها وحفظها في تطبيقك واستخدامها بدون نت.",
                                 fontSize = 11.sp,
                                 color = TextSecondary,
                                 lineHeight = 16.sp
@@ -364,7 +364,7 @@ fun WidgetImportScreen(
                             )
 
                             Text(
-                                text = "يدعم ملفات بصيغة (.json أو .widget) المخزنة في التنزيلات أو المستلمة عبر التطبيقات أوفلاين.",
+                                text = "يدعم ملفات بصيغة (.json أو .widget) المخزنة في التنزيلات أو المستلمة عبر التطبيقات بدون نت.",
                                 fontSize = 12.sp,
                                 color = TextSecondary,
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -523,7 +523,7 @@ fun WidgetImportScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "نماذج ويدجات خارجية جاهزة للاختبار أوفلاين:",
+                            text = "نماذج ويدجات خارجية جاهزة للاختبار بدون نت:",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
                             color = PrimaryCyan

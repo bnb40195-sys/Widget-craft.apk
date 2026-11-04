@@ -1,6 +1,6 @@
 {
   "name": "WidgetCraft",
-  "description": "صانع ومحرر الويدجات وتصميمها واستيرادها من الخارج مع العمل أوفلاين بالكامل بدون إنترنت",
+  "description": "صانع ومحرر الويدجات وتصميمها واستيرادها من الخارج مع العمل بالكامل بدون إنترنت",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

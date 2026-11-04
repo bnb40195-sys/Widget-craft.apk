@@ -30,7 +30,7 @@ object NotificationShortcutsHelper {
                 "إختصارات التطبيقات في مركز الإشعارات",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "شريط وصول سريع لتشغيل التطبيقات المفضلة من مركز الإشعارات أوفلاين"
+                description = "شريط وصول سريع لتشغيل التطبيقات المفضلة من مركز الإشعارات بدون نت"
                 setShowBadge(false)
                 enableVibration(false)
                 enableLights(false)
@@ -59,19 +59,22 @@ object NotificationShortcutsHelper {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(mainPendingIntent)
 
-        // Filter and choose up to 5 shortcuts
+        // Filter and choose up to 6 shortcuts based on active status and layer index
+        val activeShortcuts = shortcuts.filter { it.isActive && !it.isHidden }.sortedBy { it.layerIndex }
         val candidates = if (pinnedIds != null && pinnedIds.isNotEmpty()) {
-            shortcuts.filter { pinnedIds.contains(it.id) && !it.isHidden }
+            val pinned = activeShortcuts.filter { pinnedIds.contains(it.id) }
+            if (pinned.isNotEmpty()) pinned else activeShortcuts
         } else {
-            shortcuts.filter { !it.isHidden }
+            activeShortcuts
         }
 
-        val displayList = if (candidates.isNotEmpty()) candidates.take(5) else shortcuts.take(5)
+        val displayList = if (candidates.isNotEmpty()) candidates.take(6) else shortcuts.filter { !it.isHidden }.take(6)
 
         displayList.forEachIndexed { index, shortcut ->
             val launchIntent = Intent(context, ShortcutLaunchReceiver::class.java).apply {
                 action = ShortcutLaunchReceiver.ACTION_LAUNCH
                 putExtra(ShortcutLaunchReceiver.EXTRA_PACKAGE_NAME, shortcut.packageName)
+                putExtra(ShortcutLaunchReceiver.EXTRA_EXTERNAL_URL, shortcut.externalUrl)
                 putExtra(ShortcutLaunchReceiver.EXTRA_SYMBOL_ACTION, shortcut.iconSymbol)
                 putExtra(ShortcutLaunchReceiver.EXTRA_LABEL, shortcut.displayLabel)
             }

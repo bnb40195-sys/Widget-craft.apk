@@ -42,7 +42,7 @@ import com.example.ui.theme.PrimaryCyan
 @Composable
 fun OfflineStatusBadge(
     modifier: Modifier = Modifier,
-    text: String = "أوفلاين 100% بدون إنترنت"
+    text: String = "100% بدون إنترنت"
 ) {
     Surface(
         color = Color(0xFF10B981).copy(alpha = 0.15f),

@@ -94,7 +94,7 @@ fun LiveSandboxScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "جرب تفاعل الويدجات والاختصارات والخلفية أوفلاين",
+                            text = "جرب تفاعل الويدجات والاختصارات والخلفية بدون نت",
                             fontSize = 11.sp,
                             color = PrimaryCyan
                         )

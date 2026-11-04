@@ -98,7 +98,7 @@ object OfflineDataProvider {
         ),
         WidgetConfig(
             id = "preset_daily_quote",
-            name = "حكمة اليوم أوفلاين",
+            name = "حكمة اليوم",
             tagline = "عبارات ملهمة تتجدد وتمنحك طاقة إيجابية",
             type = WidgetType.DAILY_QUOTE,
             theme = WidgetTheme.COSMIC_VIOLET,
@@ -146,7 +146,7 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_prayers_oran",
             name = "مواقيت الصلاة (Oran, Algeria)",
-            tagline = "مواقيت الصلاة الدقيقة والعد التنازلي للأذان القادم أوفلاين",
+            tagline = "مواقيت الصلاة الدقيقة والعد التنازلي للأذان القادم بدون نت",
             type = WidgetType.PRAYER_TIMES,
             theme = WidgetTheme.CYBER_NEON,
             cornerRadiusDp = 22,
@@ -175,7 +175,7 @@ object OfflineDataProvider {
         // 4. Weather & Temperature Widget (ويدجت الحرارة والطقس)
         WidgetConfig(
             id = "preset_weather_oran",
-            name = "ويدجت الحرارة والطقس أوفلاين",
+            name = "ويدجت الحرارة والطقس",
             tagline = "درجة الحرارة وسرعة الرياح والرطوبة وحالة الطقس",
             type = WidgetType.WEATHER_TEMP,
             theme = WidgetTheme.ROYAL_AMBER,
@@ -190,7 +190,7 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_quran_audio",
             name = "ويدجت القرآن الكريم الصوتي",
-            tagline = "مشغل تلاوات القرآن الكريم العطرة بصوت كبار القراء أوفلاين",
+            tagline = "مشغل تلاوات القرآن الكريم العطرة بصوت كبار القراء بدون نت",
             type = WidgetType.QURAN_AUDIO,
             theme = WidgetTheme.EMERALD_MINT,
             cornerRadiusDp = 24,
@@ -203,7 +203,7 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_app_shortcuts",
             name = "شريط اختصارات التطبيقات والمزدوجة",
-            tagline = "شبكة إطلاق سريعة لأهم التطبيقات بأشكال وألوان مخصصة أوفلاين",
+            tagline = "شبكة إطلاق سريعة لأهم التطبيقات بأشكال وألوان مخصصة بدون نت",
             type = WidgetType.APP_SHORTCUTS,
             theme = WidgetTheme.CYBER_NEON,
             cornerRadiusDp = 24,

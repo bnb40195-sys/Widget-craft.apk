@@ -42,7 +42,7 @@ class ExampleRobolectricTest {
     fun `test widget json export and import`() {
         val original = WidgetConfig(
             name = "ساعة المطر النيونية",
-            tagline = "ساعة أوفلاين مع الثواني",
+            tagline = "ساعة بدون نت مع الثواني",
             type = WidgetType.DIGITAL_CLOCK,
             theme = WidgetTheme.CYBER_NEON,
             cornerRadiusDp = 26,
@@ -60,7 +60,7 @@ class ExampleRobolectricTest {
 
         val imported = parsedResult.getOrThrow()
         assertEquals("ساعة المطر النيونية", imported.name)
-        assertEquals("ساعة أوفلاين مع الثواني", imported.tagline)
+        assertEquals("ساعة بدون نت مع الثواني", imported.tagline)
         assertEquals(WidgetType.DIGITAL_CLOCK, imported.type)
         assertEquals(WidgetTheme.CYBER_NEON, imported.theme)
         assertEquals(26, imported.cornerRadiusDp)

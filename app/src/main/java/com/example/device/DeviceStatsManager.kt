@@ -32,7 +32,7 @@ data class DeviceStats(
 
 object DeviceStatsManager {
 
-    fun getDeviceStats(context: Context): DeviceStats {
+    fun getDeviceStats(context: Context, is24Hour: Boolean = false, useArabicNumerals: Boolean = false): DeviceStats {
         // Battery info
         val batteryFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
         val batteryStatus: Intent? = context.registerReceiver(null, batteryFilter)
@@ -91,14 +91,23 @@ object DeviceStatsManager {
 
         // Time and Date formatting
         val now = Date()
-        val timeFormat = SimpleDateFormat("hh:mm", Locale.getDefault())
-        val secondsFormat = SimpleDateFormat("ss", Locale.getDefault())
+        val timePattern = if (is24Hour) "HH:mm" else "hh:mm"
+        val timeFormat = SimpleDateFormat(timePattern, Locale.US)
+        val secondsFormat = SimpleDateFormat("ss", Locale.US)
         val cal = Calendar.getInstance()
         val isAm = cal.get(Calendar.AM_PM) == Calendar.AM
 
         val dayFormatAr = SimpleDateFormat("EEEE", Locale("ar"))
         val dateFormatAr = SimpleDateFormat("d MMMM yyyy", Locale("ar"))
         val dateFormatEn = SimpleDateFormat("EEEE, d MMM yyyy", Locale.US)
+
+        val rawTime = timeFormat.format(now)
+        val rawSec = secondsFormat.format(now)
+        val rawDateAr = dateFormatAr.format(now)
+
+        val formattedTime = com.example.util.NumeralFormatter.format(rawTime, useArabicNumerals)
+        val formattedSec = com.example.util.NumeralFormatter.format(rawSec, useArabicNumerals)
+        val formattedDateAr = com.example.util.NumeralFormatter.format(rawDateAr, useArabicNumerals)
 
         return DeviceStats(
             batteryPct = batteryPct,
@@ -108,10 +117,10 @@ object DeviceStatsManager {
             totalStorageGb = String.format(Locale.US, "%.1f", totalStorage).toDoubleOrNull() ?: 0.0,
             freeRamMb = freeRam,
             totalRamMb = totalRam,
-            currentTimeFormatted = timeFormat.format(now),
-            currentSeconds = secondsFormat.format(now),
+            currentTimeFormatted = formattedTime,
+            currentSeconds = formattedSec,
             isAm = isAm,
-            currentDateAr = dateFormatAr.format(now),
+            currentDateAr = formattedDateAr,
             currentDayNameAr = dayFormatAr.format(now),
             currentDateEn = dateFormatEn.format(now),
             currentDayNumber = cal.get(Calendar.DAY_OF_MONTH),

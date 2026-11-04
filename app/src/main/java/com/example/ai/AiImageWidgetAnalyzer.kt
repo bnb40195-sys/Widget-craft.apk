@@ -141,7 +141,7 @@ object AiImageWidgetAnalyzer {
             else -> "ويدجت ذكي مخصص"
         }
 
-        val tagline = "تم استخراجه ومطابقته بالذكاء الاصطناعي (أوفلاين بدون نت)"
+        val tagline = "تم استخراجه ومطابقته بالذكاء الاصطناعي (بدون نت)"
         val styleDescription = "تم تحليل درجات الإضاءة والألوان (${detectedTheme.titleAr}) ومطابقة النوع (${detectedType.titleAr}). خالٍ تماماً من صور النساء والحيوانات."
 
         val generatedConfig = WidgetConfig(
@@ -259,7 +259,7 @@ object AiImageWidgetAnalyzer {
         PresetDesignSample(
             id = "preset_quran_audio",
             labelAr = "مصحف صوتي تفاعلي",
-            promptDescription = "ويدجت تلاوة القرآن الكريم بصوت الشيخ العفاسي مع أزرار تشغيل وإيقاف تعمل أوفلاين",
+            promptDescription = "ويدجت تلاوة القرآن الكريم بصوت الشيخ العفاسي مع أزرار تشغيل وإيقاف تعمل بدون نت",
             previewPrimaryColor = 0xFF064E3B,
             previewAccentColor = 0xFF34D399,
             targetType = WidgetType.QURAN_AUDIO,
@@ -282,7 +282,7 @@ object AiImageWidgetAnalyzer {
         val config = WidgetConfig(
             id = UUID.randomUUID().toString(),
             name = preset.labelAr,
-            tagline = "مولد بالذكاء الاصطناعي (أوفلاين بدون نت)",
+            tagline = "مولد بالذكاء الاصطناعي (بدون نت)",
             type = preset.targetType,
             theme = preset.targetTheme,
             cornerRadiusDp = 24,
@@ -305,7 +305,7 @@ object AiImageWidgetAnalyzer {
             detectedType = preset.targetType,
             detectedSize = preset.targetSize,
             widgetName = preset.labelAr,
-            widgetTagline = "مولد بالذكاء الاصطناعي (أوفلاين بدون نت)",
+            widgetTagline = "مولد بالذكاء الاصطناعي (بدون نت)",
             styleDescription = "نمط ${preset.targetTheme.titleAr} مستخرج بدقة ذكاء اصطناعي ومفلتر 100% بدون أي صور لذوات الأرواح.",
             isCleanHalalVerified = true,
             generatedConfig = config
@@ -473,7 +473,7 @@ object AiImageWidgetAnalyzer {
         return AiWallpaperAnalysis(
             config = config,
             dimLevel = optimalDim,
-            styleTitle = "خلفية محسنة بذكاء التباين (أوفلاين)",
+            styleTitle = "خلفية محسنة بذكاء التباين (بدون نت)",
             styleDescription = "تم تحليل سطوع الصورة ($avgLum/255) وتطبيق عزل ضوئي ذكي (${(optimalDim * 100).toInt()}%) لجعل الويدجات والأيقونات واضحة ومريحة للعين."
         )
     }

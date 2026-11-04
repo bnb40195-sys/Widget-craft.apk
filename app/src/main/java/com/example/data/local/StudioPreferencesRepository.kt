@@ -41,6 +41,22 @@ class StudioPreferencesRepository(private val context: Context) {
     private val _pinnedNotificationShortcuts = MutableStateFlow(loadPinnedNotificationShortcuts())
     val pinnedNotificationShortcuts: StateFlow<Set<String>> = _pinnedNotificationShortcuts.asStateFlow()
 
+    private val _is24HourFormat = MutableStateFlow(prefs.getBoolean("is_24_hour_format", false))
+    val is24HourFormat: StateFlow<Boolean> = _is24HourFormat.asStateFlow()
+
+    fun set24HourFormat(enabled: Boolean) {
+        prefs.edit().putBoolean("is_24_hour_format", enabled).apply()
+        _is24HourFormat.value = enabled
+    }
+
+    private val _useArabicNumerals = MutableStateFlow(prefs.getBoolean("use_arabic_numerals", false))
+    val useArabicNumerals: StateFlow<Boolean> = _useArabicNumerals.asStateFlow()
+
+    fun setUseArabicNumerals(enabled: Boolean) {
+        prefs.edit().putBoolean("use_arabic_numerals", enabled).apply()
+        _useArabicNumerals.value = enabled
+    }
+
     // ---------------- WALLPAPERS ----------------
     fun setWallpaper(config: WallpaperConfig) {
         prefs.edit()
@@ -81,12 +97,15 @@ class StudioPreferencesRepository(private val context: Context) {
             obj.put("name", s.name)
             obj.put("customLabel", s.customLabel)
             obj.put("packageName", s.packageName)
+            obj.put("externalUrl", s.externalUrl)
             obj.put("iconShape", s.iconShape.name)
             obj.put("iconColor", s.iconColor)
             obj.put("iconSymbol", s.iconSymbol)
             obj.put("isDualApp", s.isDualApp)
             obj.put("dualLabel", s.dualLabel)
             obj.put("isHidden", s.isHidden)
+            obj.put("isActive", s.isActive)
+            obj.put("layerIndex", s.layerIndex)
             obj.put("sortOrder", s.sortOrder)
             array.put(obj)
         }
@@ -100,7 +119,35 @@ class StudioPreferencesRepository(private val context: Context) {
         if (index >= 0) {
             current[index] = shortcut
         } else {
-            current.add(shortcut)
+            // Assign next available layer if active
+            val maxLayer = current.filter { it.isActive }.maxOfOrNull { it.layerIndex } ?: 0
+            val newShortcut = if (shortcut.isActive && shortcut.layerIndex <= 1) {
+                shortcut.copy(layerIndex = maxLayer + 1)
+            } else shortcut
+            current.add(newShortcut)
+        }
+        saveShortcuts(current)
+    }
+
+    fun toggleShortcutActive(id: String) {
+        val current = _shortcuts.value.toMutableList()
+        val index = current.indexOfFirst { it.id == id }
+        if (index >= 0) {
+            val item = current[index]
+            val willBeActive = !item.isActive
+            val newLayer = if (willBeActive) {
+                (current.filter { it.isActive }.maxOfOrNull { it.layerIndex } ?: 0) + 1
+            } else {
+                item.layerIndex
+            }
+            current[index] = item.copy(isActive = willBeActive, layerIndex = newLayer)
+            saveShortcuts(current)
+        }
+    }
+
+    fun setShortcutLayer(id: String, newLayer: Int) {
+        val current = _shortcuts.value.map {
+            if (it.id == id) it.copy(layerIndex = newLayer) else it
         }
         saveShortcuts(current)
     }
@@ -121,12 +168,18 @@ class StudioPreferencesRepository(private val context: Context) {
         val jsonStr = prefs.getString("shortcuts_json", null)
         if (jsonStr.isNullOrBlank()) {
             val defaults = listOf(
-                AppShortcut(id = "s_phone", name = "الهاتف", customLabel = "الهاتف", packageName = "com.google.android.dialer", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF10B981, iconSymbol = "Phone"),
-                AppShortcut(id = "s_messages", name = "الرسائل", customLabel = "الرسائل", packageName = "com.google.android.apps.messaging", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF38BDF8, iconSymbol = "Chat"),
-                AppShortcut(id = "s_camera", name = "الكاميرا", customLabel = "الكاميرا", packageName = "com.google.android.GoogleCamera", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFF59E0B, iconSymbol = "Camera"),
-                AppShortcut(id = "s_browser", name = "المتصفح", customLabel = "المتصفح", packageName = "com.android.chrome", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFA855F7, iconSymbol = "Browser"),
-                // Dual App Example
-                AppShortcut(id = "s_whatsapp_dual", name = "واتساب 2", customLabel = "واتساب للعمل", packageName = "com.whatsapp", iconShape = IconShape.HEXAGON, iconColor = 0xFF059669, iconSymbol = "Dual", isDualApp = true, dualLabel = "مزدوج")
+                // Active shortcuts (الاختصارات النشطة - طبقات 1 إلى 7 كما في الصورة)
+                AppShortcut(id = "s_settings", name = "الإعدادات", customLabel = "الإعدادات", packageName = "com.android.settings", iconShape = IconShape.ROUND, iconColor = 0xFF2563EB, iconSymbol = "Settings", isActive = true, layerIndex = 1),
+                AppShortcut(id = "s_calendar", name = "الروزنامة", customLabel = "الروزنامة", packageName = "com.google.android.calendar", iconShape = IconShape.ROUND, iconColor = 0xFF0284C7, iconSymbol = "Calendar", isActive = true, layerIndex = 2),
+                AppShortcut(id = "s_mt_manager", name = "MT Manager", customLabel = "MT Manager", packageName = "bin.mt.plus", iconShape = IconShape.ROUND, iconColor = 0xFF1D4ED8, iconSymbol = "Tools", isActive = true, layerIndex = 3),
+                AppShortcut(id = "s_mi_video", name = "فيديو Mi", customLabel = "فيديو Mi", packageName = "com.miui.videoplayer", iconShape = IconShape.ROUND, iconColor = 0xFF2563EB, iconSymbol = "PlayArrow", isActive = true, layerIndex = 4),
+                AppShortcut(id = "s_tile_shortcuts", name = "Tile Shortcuts", customLabel = "Tile Shortcuts", packageName = "com.tombayley.tileshortcuts", iconShape = IconShape.ROUND, iconColor = 0xFF1E3A8A, iconSymbol = "Tiles", isActive = true, layerIndex = 5),
+                AppShortcut(id = "s_prayers", name = "Prayers Gadget", customLabel = "Prayers Gadget", packageName = "com.example.prayers", iconShape = IconShape.ROUND, iconColor = 0xFF0EA5E9, iconSymbol = "Clock", isActive = true, layerIndex = 6),
+                AppShortcut(id = "s_u_dictionary", name = "يو-دكشنري", customLabel = "يو-دكشنري", packageName = "com.youdao.hindict", iconShape = IconShape.ROUND, iconColor = 0xFFEA580C, iconSymbol = "Translate", isActive = true, layerIndex = 7),
+                // Inactive shortcuts (الاختصارات الغير نشطة كما في الصورة)
+                AppShortcut(id = "s_http_injector", name = "HTTP Injector", customLabel = "HTTP Injector", packageName = "com.evozi.injector", iconShape = IconShape.ROUND, iconColor = 0xFF2563EB, iconSymbol = "Tools", isActive = false, layerIndex = 8),
+                AppShortcut(id = "s_telegram", name = "تيليجرام", customLabel = "تيليجرام", packageName = "org.telegram.messenger", iconShape = IconShape.ROUND, iconColor = 0xFF1E3A8A, iconSymbol = "Chat", isActive = false, layerIndex = 9),
+                AppShortcut(id = "s_http_custom", name = "HTTP Custom", customLabel = "HTTP Custom", packageName = "com.cae.cnnlite", iconShape = IconShape.ROUND, iconColor = 0xFF0284C7, iconSymbol = "Tools", isActive = false, layerIndex = 10)
             )
             return defaults
         }
@@ -141,12 +194,15 @@ class StudioPreferencesRepository(private val context: Context) {
                         name = obj.getString("name"),
                         customLabel = obj.optString("customLabel", ""),
                         packageName = obj.optString("packageName", ""),
-                        iconShape = try { IconShape.valueOf(obj.getString("iconShape")) } catch (e: Exception) { IconShape.SQUIRCLE },
-                        iconColor = obj.optLong("iconColor", 0xFF38BDF8),
+                        externalUrl = obj.optString("externalUrl", ""),
+                        iconShape = try { IconShape.valueOf(obj.getString("iconShape")) } catch (e: Exception) { IconShape.ROUND },
+                        iconColor = obj.optLong("iconColor", 0xFF2563EB),
                         iconSymbol = obj.optString("iconSymbol", "App"),
                         isDualApp = obj.optBoolean("isDualApp", false),
                         dualLabel = obj.optString("dualLabel", "مزدوج"),
                         isHidden = obj.optBoolean("isHidden", false),
+                        isActive = obj.optBoolean("isActive", true),
+                        layerIndex = obj.optInt("layerIndex", i + 1),
                         sortOrder = obj.optInt("sortOrder", i)
                     )
                 )
@@ -209,6 +265,8 @@ class StudioPreferencesRepository(private val context: Context) {
             obj.put("minute", a.minute)
             obj.put("repeatMode", a.repeatMode)
             obj.put("soundEnabled", a.soundEnabled)
+            obj.put("soundId", a.soundId)
+            obj.put("soundTitle", a.soundTitle)
             obj.put("vibrateEnabled", a.vibrateEnabled)
             obj.put("linkedWidgetId", a.linkedWidgetId ?: "")
             obj.put("isEnabled", a.isEnabled)
@@ -246,9 +304,9 @@ class StudioPreferencesRepository(private val context: Context) {
         val jsonStr = prefs.getString("widget_alerts_json", null)
         if (jsonStr.isNullOrBlank()) {
             return listOf(
-                WidgetAlert(title = "تذكير شرب الماء 💧", hour = 10, minute = 0, repeatMode = "يومياً"),
-                WidgetAlert(title = "وقت التسبيح والاستغفار ✨", hour = 14, minute = 30, repeatMode = "يومياً"),
-                WidgetAlert(title = "مراجعة المهام المسائية 📝", hour = 20, minute = 0, repeatMode = "يومياً")
+                WidgetAlert(title = "تذكير شرب الماء 💧", hour = 10, minute = 0, repeatMode = "يومياً", soundId = "alert_sound", soundTitle = "رنين التنبيه 🔔"),
+                WidgetAlert(title = "وقت التسبيح والاستغفار ✨", hour = 14, minute = 30, repeatMode = "يومياً", soundId = "quran_recitation", soundTitle = "تلاوة هادئة 📖"),
+                WidgetAlert(title = "مراجعة المهام المسائية 📝", hour = 20, minute = 0, repeatMode = "يومياً", soundId = "hello_chime", soundTitle = "رنين ترحيبي 🎵")
             )
         }
         return try {
@@ -264,6 +322,8 @@ class StudioPreferencesRepository(private val context: Context) {
                         minute = obj.getInt("minute"),
                         repeatMode = obj.optString("repeatMode", "يومياً"),
                         soundEnabled = obj.optBoolean("soundEnabled", true),
+                        soundId = obj.optString("soundId", "alert_sound"),
+                        soundTitle = obj.optString("soundTitle", "رنين التنبيه 🔔"),
                         vibrateEnabled = obj.optBoolean("vibrateEnabled", true),
                         linkedWidgetId = obj.optString("linkedWidgetId").ifEmpty { null },
                         isEnabled = obj.optBoolean("isEnabled", true),

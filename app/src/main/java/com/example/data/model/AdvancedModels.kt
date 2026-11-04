@@ -16,39 +16,48 @@ data class AppShortcut(
     val name: String,
     val customLabel: String = "",
     val packageName: String = "",
-    val iconShape: IconShape = IconShape.SQUIRCLE,
-    val iconColor: Long = 0xFF38BDF8,
-    val iconSymbol: String = "App", // "Phone", "Chat", "Camera", "Browser", "Music", "Tools", "Notes", "Dual"
+    val externalUrl: String = "",
+    val iconShape: IconShape = IconShape.ROUND,
+    val iconColor: Long = 0xFF2563EB,
+    val iconSymbol: String = "App", // "Phone", "Chat", "Camera", "Browser", "Music", "Tools", "Notes", "Dual", "Link", "Code", "Terminal", "Settings", "Calendar", "Tiles", "Clock", "Translate", "Shield", "Injector"
     val isDualApp: Boolean = false,
     val dualLabel: String = "نسخة 2",
     val isHidden: Boolean = false,
+    val isActive: Boolean = true,
+    val layerIndex: Int = 1,
     val sortOrder: Int = 0
 ) {
     val displayLabel: String get() = customLabel.ifBlank { name }
+    val isExternalSource: Boolean get() = externalUrl.isNotBlank() || (packageName.isNotBlank() && !packageName.startsWith("com.example"))
+    fun getLayerLabel(useArabicNumerals: Boolean = false): String {
+        val numStr = com.example.util.NumeralFormatter.formatNumber(layerIndex, useArabicNumerals)
+        return "(طبقة $numStr)"
+    }
 }
 
 object PopularAppPresets {
     val presets = listOf(
+        // External & Messaging Apps
         AppShortcut(name = "واتساب", customLabel = "WhatsApp", packageName = "com.whatsapp", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF25D366, iconSymbol = "Chat"),
         AppShortcut(name = "واتساب مزدوج", customLabel = "واتساب 2", packageName = "com.whatsapp", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF25D366, iconSymbol = "Chat", isDualApp = true, dualLabel = "مزدوج"),
         AppShortcut(name = "تليجرام", customLabel = "Telegram", packageName = "org.telegram.messenger", iconShape = IconShape.ROUND, iconColor = 0xFF2AABEE, iconSymbol = "Chat"),
         AppShortcut(name = "تليجرام للعمل", customLabel = "تليجرام 2", packageName = "org.telegram.messenger", iconShape = IconShape.ROUND, iconColor = 0xFF2AABEE, iconSymbol = "Chat", isDualApp = true, dualLabel = "عمل"),
+        AppShortcut(name = "تيرمكس (Termux)", customLabel = "Termux", packageName = "com.termux", iconShape = IconShape.HEXAGON, iconColor = 0xFF10B981, iconSymbol = "Tools"),
+        AppShortcut(name = "مشغل VLC خارجي", customLabel = "VLC Player", packageName = "org.videolan.vlc", iconShape = IconShape.ROUNDED_SQUARE, iconColor = 0xFFFF9800, iconSymbol = "Music"),
+        AppShortcut(name = "متصفح بريف (Brave)", customLabel = "Brave", packageName = "com.brave.browser", iconShape = IconShape.ROUND, iconColor = 0xFFFF5722, iconSymbol = "Browser"),
+        AppShortcut(name = "ديسكورد (Discord)", customLabel = "Discord", packageName = "com.discord", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF5865F2, iconSymbol = "Chat"),
         AppShortcut(name = "يوتيوب", customLabel = "YouTube", packageName = "com.google.android.youtube", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFFF0000, iconSymbol = "PlayArrow"),
+        AppShortcut(name = "سبوتيفاي", customLabel = "Spotify", packageName = "com.spotify.music", iconShape = IconShape.ROUND, iconColor = 0xFF1DB954, iconSymbol = "Music"),
+        AppShortcut(name = "القرآن الكريم والأذكار", customLabel = "القرآن", packageName = "com.quran.labs.androidquran", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF059669, iconSymbol = "Notes"),
         AppShortcut(name = "فيسبوك", customLabel = "Facebook", packageName = "com.facebook.katana", iconShape = IconShape.ROUND, iconColor = 0xFF1877F2, iconSymbol = "Browser"),
         AppShortcut(name = "إنستغرام", customLabel = "Instagram", packageName = "com.instagram.android", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFE1306C, iconSymbol = "Camera"),
-        AppShortcut(name = "تيك توك", customLabel = "TikTok", packageName = "com.zhiliaoapp.musically", iconShape = IconShape.HEXAGON, iconColor = 0xFF000000, iconSymbol = "PlayArrow"),
-        AppShortcut(name = "سناب شات", customLabel = "Snapchat", packageName = "com.snapchat.android", iconShape = IconShape.ROUND, iconColor = 0xFFFFFC00, iconSymbol = "Camera"),
-        AppShortcut(name = "ماسنجر", customLabel = "Messenger", packageName = "com.facebook.orca", iconShape = IconShape.ROUND, iconColor = 0xFF0084FF, iconSymbol = "Chat"),
+        AppShortcut(name = "إكس (تويتر)", customLabel = "X / Twitter", packageName = "com.twitter.android", iconShape = IconShape.ROUND, iconColor = 0xFF000000, iconSymbol = "Chat"),
         AppShortcut(name = "الهاتف", customLabel = "اتصال", packageName = "com.google.android.dialer", iconShape = IconShape.ROUND, iconColor = 0xFF10B981, iconSymbol = "Phone"),
         AppShortcut(name = "الكاميرا", customLabel = "الكاميرا", packageName = "com.google.android.GoogleCamera", iconShape = IconShape.HEXAGON, iconColor = 0xFFF59E0B, iconSymbol = "Camera"),
         AppShortcut(name = "المتصفح كروم", customLabel = "Chrome", packageName = "com.android.chrome", iconShape = IconShape.ROUND, iconColor = 0xFF4285F4, iconSymbol = "Browser"),
-        AppShortcut(name = "الصور والمعرض", customLabel = "الصور", packageName = "com.google.android.apps.photos", iconShape = IconShape.ROUNDED_SQUARE, iconColor = 0xFFEC4899, iconSymbol = "Camera"),
         AppShortcut(name = "الملاحظات", customLabel = "ملاحظاتي", packageName = "com.google.android.keep", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFEAB308, iconSymbol = "Notes"),
-        AppShortcut(name = "القرآن الكريم", customLabel = "القرآن", packageName = "com.example", iconShape = IconShape.SQUIRCLE, iconColor = 0xFF059669, iconSymbol = "Music"),
-        AppShortcut(name = "سبوتيفاي", customLabel = "Spotify", packageName = "com.spotify.music", iconShape = IconShape.ROUND, iconColor = 0xFF1DB954, iconSymbol = "Music"),
-        AppShortcut(name = "نتفلكس", customLabel = "Netflix", packageName = "com.netflix.mediaclient", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFE50914, iconSymbol = "PlayArrow"),
-        AppShortcut(name = "الآلة الحاسبة", customLabel = "حاسبة", packageName = "com.google.android.calculator", iconShape = IconShape.ROUNDED_SQUARE, iconColor = 0xFF6366F1, iconSymbol = "Tools"),
-        AppShortcut(name = "الإعدادات", customLabel = "الضبط", packageName = "com.android.settings", iconShape = IconShape.ROUNDED_SQUARE, iconColor = 0xFF64748B, iconSymbol = "Tools")
+        AppShortcut(name = "رابط ويب خارجي", customLabel = "موقع خارجي", externalUrl = "https://google.com", iconShape = IconShape.ROUND, iconColor = 0xFF06B6D4, iconSymbol = "Browser"),
+        AppShortcut(name = "الآلة الحاسبة", customLabel = "حاسبة", packageName = "com.google.android.calculator", iconShape = IconShape.ROUNDED_SQUARE, iconColor = 0xFF6366F1, iconSymbol = "Tools")
     )
 }
 
@@ -170,15 +179,24 @@ data class WidgetAlert(
     val minute: Int,
     val repeatMode: String = "يومياً", // "يومياً", "مرة واحدة", "أيام العمل"
     val soundEnabled: Boolean = true,
+    val soundId: String = "alert_sound", // "alert_sound", "adhan_chime", "quran_recitation", "hello_chime", "silent"
+    val soundTitle: String = "رنين التنبيه 🔔",
     val vibrateEnabled: Boolean = true,
     val linkedWidgetId: String? = null,
     val isEnabled: Boolean = true,
     val createdAt: Long = System.currentTimeMillis()
 ) {
-    val formattedTime: String
-        get() {
+    fun formatTime(is24Hour: Boolean = false): String {
+        return if (is24Hour) {
+            String.format(java.util.Locale.US, "%02d:%02d", hour, minute)
+        } else {
             val h = if (hour == 0) 12 else if (hour > 12) hour - 12 else hour
             val period = if (hour < 12) "ص" else "م"
-            return String.format(java.util.Locale.US, "%02d:%02d %s", h, minute, period)
+            String.format(java.util.Locale.US, "%02d:%02d %s", h, minute, period)
         }
+    }
+
+    val formattedTime: String
+        get() = formatTime(false)
 }
+

@@ -143,7 +143,7 @@ fun AllWidgetsScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "إدارة وحفظ أوفلاين بدون نت 100%",
+                                text = "إدارة وحفظ بدون نت 100%",
                                 fontSize = 11.sp,
                                 color = TextSecondary
                             )
@@ -293,7 +293,7 @@ fun AllWidgetsScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "جرب تغيير مصطلح البحث أو الفلتر، أو استخدم استوديو الذكاء الاصطناعي لتحليل أي صورة وتوليد ويدجت فوري يعمل أوفلاين.",
+                                text = "جرب تغيير مصطلح البحث أو الفلتر، أو استخدم استوديو الذكاء الاصطناعي لتحليل أي صورة وتوليد ويدجت فوري يعمل بدون نت.",
                                 fontSize = 12.sp,
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center
@@ -518,7 +518,7 @@ private fun AllWidgetsCardItem(
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("مشاركة كود الويدجت أوفلاين", color = TextPrimary) },
+                                text = { Text("مشاركة كود الويدجت بدون نت", color = TextPrimary) },
                                 leadingIcon = { Icon(Icons.Default.Share, contentDescription = null, tint = TextSecondary) },
                                 onClick = {
                                     menuExpanded = false
