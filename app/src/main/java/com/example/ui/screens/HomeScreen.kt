@@ -19,12 +19,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,6 +41,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Keyboard
@@ -53,9 +56,17 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.ViewAgenda
 import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.Widgets
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.History
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -70,6 +81,9 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -78,7 +92,13 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import com.example.ui.components.WidgetPreviewCard
+import com.example.data.model.WidgetConfig
+import com.example.data.model.WidgetType
+import com.example.data.model.OfflineDataProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -90,6 +110,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -116,13 +137,30 @@ fun HomeScreen(
     val shortcuts by viewModel.shortcuts.collectAsState()
     val notificationShortcutsEnabled by viewModel.notificationShortcutsEnabled.collectAsState()
     val useArabicNumerals by viewModel.useArabicNumerals.collectAsState()
+    val is24HourFormat by viewModel.is24HourFormat.collectAsState()
+    val allWidgets by viewModel.allWidgets.collectAsState()
+    val activeLauncherWidget by viewModel.activeLauncherWidget.collectAsState()
+
+    val featuredWidget = remember(activeLauncherWidget, allWidgets) {
+        activeLauncherWidget ?: allWidgets.firstOrNull() ?: OfflineDataProvider.preinstalledTemplates[0]
+    }
+    val dailyAyahWidget = remember(allWidgets) {
+        allWidgets.find { it.type == WidgetType.DAILY_QURAN_AYAH }
+            ?: OfflineDataProvider.preinstalledTemplates.find { it.type == WidgetType.DAILY_QURAN_AYAH }
+            ?: OfflineDataProvider.preinstalledTemplates[0]
+    }
+    val todayInHistoryWidget = remember(allWidgets) {
+        allWidgets.find { it.type == WidgetType.TODAY_IN_HISTORY }
+            ?: OfflineDataProvider.preinstalledTemplates.find { it.type == WidgetType.TODAY_IN_HISTORY }
+            ?: OfflineDataProvider.preinstalledTemplates[0]
+    }
 
     // State dialogs
     var selectedShortcutForAction by remember { mutableStateOf<AppShortcut?>(null) }
     var showAddShortcutDialog by remember { mutableStateOf(false) }
     var showInstalledAppsPicker by remember { mutableStateOf(false) }
     var showHelpDialog by remember { mutableStateOf(false) }
-    var showNavigationDrawerSheet by remember { mutableStateOf(false) }
+    var showTopBarWindow by remember { mutableStateOf(false) }
     var showEditShortcutDialog by remember { mutableStateOf<AppShortcut?>(null) }
 
     // Active vs Inactive shortcuts
@@ -134,229 +172,347 @@ fun HomeScreen(
     }
 
     Scaffold(
-        containerColor = Color(0xFF13151D),
-        // Red coral FAB at bottom center matching the screenshot
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showAddShortcutDialog = true },
-                shape = CircleShape,
-                containerColor = Color(0xFFE11D48),
-                contentColor = Color.White,
-                modifier = Modifier
-                    .size(56.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = "إضافة اختصار",
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-        },
-        floatingActionButtonPosition = androidx.compose.material3.FabPosition.Center,
-        // Bottom bar replacing top bar per user request: "مع تحويل شريط العلوي إلى شريط السفلي"
-        bottomBar = {
-            Surface(
-                color = Color(0xFF1A1C26),
-                tonalElevation = 8.dp,
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2E3344).copy(alpha = 0.5f))
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    // Right group: Hamburger Menu for all app studios & Help
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = { showNavigationDrawerSheet = true }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Menu,
-                                contentDescription = "القائمة والأقسام",
-                                tint = Color.White,
-                                modifier = Modifier.size(26.dp)
-                            )
-                        }
-
-                        IconButton(
-                            onClick = { showHelpDialog = true }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.HelpOutline,
-                                contentDescription = "المساعدة والتعليمات",
-                                tint = Color(0xFF94A3B8),
-                                modifier = Modifier.size(24.dp)
-                            )
-                        }
-                    }
-
-                    // Center: 1234 ⇄ ١٢٣٤ Numeral Switcher Button
-                    Surface(
-                        onClick = { viewModel.toggleArabicNumerals() },
-                        shape = RoundedCornerShape(20.dp),
-                        color = Color(0xFF262938),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B82F6).copy(alpha = 0.4f)),
-                        modifier = Modifier.height(36.dp)
+        containerColor = Color(0xFF11131A),
+        topBar = {
+            TopAppBar(
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color(0xFF131620),
+                    titleContentColor = Color.White
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = { showTopBarWindow = true },
+                        modifier = Modifier
+                            .padding(start = 4.dp)
+                            .testTag("top_bar_iii_button")
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.padding(horizontal = 12.dp)
+                            horizontalArrangement = Arrangement.spacedBy(3.5.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
+                            repeat(3) {
+                                Box(
+                                    modifier = Modifier
+                                        .width(2.5.dp)
+                                        .height(18.dp)
+                                        .background(PrimaryCyan, RoundedCornerShape(2.dp))
+                                )
+                            }
+                        }
+                    }
+                },
+                title = {
+                    Column {
+                        Text(
+                            text = "الثيمات",
+                            fontWeight = FontWeight.Black,
+                            fontSize = 20.sp,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "استوديو الثيمات والويدجات المتقدمة",
+                            fontSize = 10.sp,
+                            color = TextSecondary
+                        )
+                    }
+                },
+                actions = {
+                    Surface(
+                        onClick = { showTopBarWindow = true },
+                        shape = RoundedCornerShape(12.dp),
+                        color = PrimaryCyan.copy(alpha = 0.14f),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryCyan.copy(alpha = 0.4f)),
+                        modifier = Modifier
+                            .padding(end = 4.dp)
+                            .testTag("top_bar_window_pill")
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                repeat(3) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(2.dp)
+                                            .height(12.dp)
+                                            .background(PrimaryCyan, RoundedCornerShape(1.dp))
+                                    )
+                                }
+                            }
                             Text(
-                                text = if (useArabicNumerals) "١٢٣٤" else "1234",
-                                color = Color(0xFF38BDF8),
+                                text = "النافذة",
+                                color = PrimaryCyan,
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Icon(
-                                imageVector = Icons.Default.SwapHoriz,
-                                contentDescription = "تبديل الأرقام",
-                                tint = Color(0xFF94A3B8),
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Spacer(modifier = Modifier.width(6.dp))
-                            Text(
-                                text = if (useArabicNumerals) "1234" else "١٢٣٤",
-                                color = Color(0xFF94A3B8),
                                 fontSize = 11.sp
                             )
                         }
                     }
+                    IconButton(
+                        onClick = { viewModel.navigateTo(AppScreen.Settings) },
+                        modifier = Modifier.testTag("home_settings_button")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "الإعدادات",
+                            tint = Color.White
+                        )
+                    }
+                }
+            )
+        },
+        bottomBar = {
+            NavigationBar(
+                containerColor = Color(0xFF161922),
+                tonalElevation = 8.dp
+            ) {
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { /* Already on Home */ },
+                    icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
+                    label = { Text("الرئيسية", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = PrimaryCyan,
+                        selectedTextColor = PrimaryCyan,
+                        indicatorColor = PrimaryCyan.copy(alpha = 0.18f),
+                        unselectedIconColor = TextSecondary,
+                        unselectedTextColor = TextSecondary
+                    )
+                )
 
-                    // Left group: Tile Mode Icon (Red) and Notification Center Elements (Blue)
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        // Blue Notification Shortcuts Toggle Icon
-                        Surface(
-                            onClick = {
-                                viewModel.toggleNotificationShortcuts(!notificationShortcutsEnabled)
-                            },
-                            shape = RoundedCornerShape(10.dp),
-                            color = if (notificationShortcutsEnabled) Color(0xFF2563EB) else Color(0xFF1E293B),
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Icon(
-                                    imageVector = if (notificationShortcutsEnabled) Icons.Default.NotificationsActive else Icons.Default.Notifications,
-                                    contentDescription = "عناصر شريط الإشعارات",
-                                    tint = if (notificationShortcutsEnabled) Color.White else Color(0xFF64748B),
-                                    modifier = Modifier.size(20.dp)
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { viewModel.navigateTo(AppScreen.AllWidgets) },
+                    icon = { Icon(Icons.Default.Widgets, contentDescription = "الثيمات") },
+                    label = { Text("الثيمات", fontSize = 11.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        unselectedIconColor = TextSecondary,
+                        unselectedTextColor = TextSecondary
+                    )
+                )
+
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { viewModel.navigateTo(AppScreen.InAppBrowser()) },
+                    icon = { Icon(Icons.Default.Language, contentDescription = "متصفح ARNA") },
+                    label = { Text("ARNA", fontSize = 11.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        unselectedIconColor = TextSecondary,
+                        unselectedTextColor = TextSecondary
+                    )
+                )
+
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { viewModel.navigateTo(AppScreen.VideoPlayer()) },
+                    icon = { Icon(Icons.Default.Videocam, contentDescription = "الفيديوهات") },
+                    label = { Text("الفيديوهات", fontSize = 11.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        unselectedIconColor = TextSecondary,
+                        unselectedTextColor = TextSecondary
+                    )
+                )
+
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { viewModel.navigateTo(AppScreen.Settings) },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "الإعدادات") },
+                    label = { Text("الإعدادات", fontSize = 11.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        unselectedIconColor = TextSecondary,
+                        unselectedTextColor = TextSecondary
+                    )
+                )
+            }
+        }
+    ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            item { Spacer(modifier = Modifier.height(4.dp)) }
+
+            // 1. Featured / Active Widget Hero Section
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "الويدجت النشط على الشاشة",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color.White
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                color = Color(0xFF38BDF8).copy(alpha = 0.2f),
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Text(
+                                    text = "مباشر ⚡",
+                                    color = Color(0xFF38BDF8),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                        TextButton(onClick = { viewModel.navigateTo(AppScreen.AllWidgets) }) {
+                            Text("كل الثيمات (${NumeralFormatter.formatNumber(allWidgets.size, useArabicNumerals)})", fontSize = 11.sp, color = PrimaryCyan)
+                        }
+                    }
 
-                        // Red Tile Shortcuts Mode Icon (matching screenshot)
-                        Surface(
+                    // Live Interactive Preview of Featured Widget
+                    WidgetPreviewCard(
+                        config = featuredWidget,
+                        isInteractive = true,
+                        onCounterIncrement = { id -> viewModel.incrementCounter(id) }
+                    )
+
+                    // Hero Quick Action Buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = { viewModel.pinToHomeScreen(featuredWidget) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
                             shape = RoundedCornerShape(10.dp),
-                            color = Color(0xFFDC2626),
-                            modifier = Modifier.size(38.dp)
+                            modifier = Modifier.weight(1f)
                         ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Box(modifier = Modifier.size(5.dp).background(Color.White, CircleShape))
-                                    Box(modifier = Modifier.size(5.dp).background(Color.White, CircleShape))
-                                    Box(modifier = Modifier.size(5.dp).background(Color.White, CircleShape))
+                            Icon(Icons.Default.PushPin, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("تثبيت على الشاشة", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+
+                        Button(
+                            onClick = { viewModel.navigateTo(AppScreen.Editor(featuredWidget.id)) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("تعديل في المحرر", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
+            // 2. Daily Islamic & Inspiration Shelf
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "نفحات إيمانية وتاريخية يومية 🌙",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp,
+                        color = Color.White
+                    )
+
+                    // Daily Ayah Widget Card
+                    WidgetPreviewCard(
+                        config = dailyAyahWidget,
+                        isInteractive = true
+                    )
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Today in History Widget Card
+                    WidgetPreviewCard(
+                        config = todayInHistoryWidget,
+                        isInteractive = true
+                    )
+                }
+            }
+
+            // 3. Quick Shortcuts Shelf (الاختصارات المفضلة مع الحفاظ على كافة إمكانياتها)
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "إختصارات التطبيقات المفضلة ⚡",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 15.sp,
+                                color = Color.White
+                            )
+                        }
+
+                        Row {
+                            TextButton(onClick = { showAddShortcutDialog = true }) {
+                                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp), tint = PrimaryCyan)
+                                Spacer(modifier = Modifier.width(2.dp))
+                                Text("إضافة", fontSize = 11.sp, color = PrimaryCyan)
+                            }
+
+                            TextButton(onClick = { viewModel.navigateTo(AppScreen.ShortcutsStudio) }) {
+                                Text("إدارة الكل", fontSize = 11.sp, color = Color(0xFFFBBF24))
+                            }
+                        }
+                    }
+
+                    if (activeShortcuts.isNotEmpty()) {
+                        Surface(
+                            color = Color(0xFF161922),
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF262938)),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            LazyRow(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 12.dp, horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                items(activeShortcuts, key = { it.id }) { shortcut ->
+                                    Box(modifier = Modifier.width(72.dp)) {
+                                        ShortcutItemTile(
+                                            shortcut = shortcut,
+                                            useArabicNumerals = useArabicNumerals,
+                                            isActiveSection = true,
+                                            onClick = { viewModel.launchAppShortcut(shortcut) },
+                                            onLongClick = { selectedShortcutForAction = shortcut }
+                                        )
+                                    }
                                 }
+                            }
+                        }
+                    } else {
+                        Surface(
+                            color = Color(0xFF161922),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { showAddShortcutDialog = true }
+                                .padding(16.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Default.Add, contentDescription = null, tint = PrimaryCyan, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("اضغط هنا لإضافة اختصارات وتطبيقات سريعة", fontSize = 12.sp, color = TextSecondary)
                             }
                         }
                     }
                 }
             }
-        }
-    ) { innerPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = innerPadding.calculateTopPadding() + 20.dp,
-                bottom = innerPadding.calculateBottomPadding() + 80.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Header: الاختصارات النشطة
-            item(span = { GridItemSpan(4) }) {
-                Text(
-                    text = "الاختصارات النشطه",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color(0xFFE2E8F0),
-                    textAlign = TextAlign.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 6.dp)
-                )
-            }
 
-            // Grid items for Active Shortcuts (كما في الصورة)
-            items(activeShortcuts, key = { it.id }) { shortcut ->
-                ShortcutItemTile(
-                    shortcut = shortcut,
-                    useArabicNumerals = useArabicNumerals,
-                    isActiveSection = true,
-                    onClick = { viewModel.launchAppShortcut(shortcut) },
-                    onLongClick = { selectedShortcutForAction = shortcut }
-                )
-            }
-
-            // Divider between Active and Inactive sections
-            item(span = { GridItemSpan(4) }) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Divider(
-                    color = Color(0xFF262938),
-                    thickness = 1.dp,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
-                Text(
-                    text = "الاختصارات الغير نشطة",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp,
-                    color = Color(0xFFE2E8F0),
-                    textAlign = TextAlign.End,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 12.dp, bottom = 6.dp)
-                )
-            }
-
-            // Grid items for Inactive Shortcuts (كما في الصورة)
-            items(inactiveShortcuts, key = { it.id }) { shortcut ->
-                ShortcutItemTile(
-                    shortcut = shortcut,
-                    useArabicNumerals = useArabicNumerals,
-                    isActiveSection = false,
-                    onClick = { selectedShortcutForAction = shortcut },
-                    onLongClick = { selectedShortcutForAction = shortcut }
-                )
-            }
-
-            // Empty state if no inactive shortcuts
-            if (inactiveShortcuts.isEmpty()) {
-                item(span = { GridItemSpan(4) }) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 20.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "لا توجد اختصارات غير نشطة حالياً",
-                            color = Color(0xFF64748B),
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-            }
+            item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
 
@@ -864,89 +1020,179 @@ fun HomeScreen(
         )
     }
 
-    // ---------------- NAVIGATION DRAWER SHEET ----------------
-    if (showNavigationDrawerSheet) {
+    // ---------------- TOP BAR ||| WINDOW (نافذة الشريط العلوي) ----------------
+    if (showTopBarWindow) {
         ModalBottomSheet(
-            onDismissRequest = { showNavigationDrawerSheet = false },
-            containerColor = Color(0xFF1A1C26),
+            onDismissRequest = { showTopBarWindow = false },
+            containerColor = Color(0xFF161922),
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(24.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .navigationBarsPadding(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = PrimaryCyan.copy(alpha = 0.18f),
+                            modifier = Modifier.size(38.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
+                                    repeat(3) {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(2.5.dp)
+                                                .height(16.dp)
+                                                .background(PrimaryCyan, RoundedCornerShape(2.dp))
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "نافذة الشريط العلوي",
+                                fontWeight = FontWeight.Black,
+                                fontSize = 16.sp,
+                                color = Color.White
+                            )
+                            Text(
+                                text = "الخيارات السريعة والتنقل بين استوديوهات التطبيق",
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
+                        }
+                    }
+
+                    IconButton(onClick = { showTopBarWindow = false }) {
+                        Icon(
+                            imageVector = Icons.Default.Close,
+                            contentDescription = "إغلاق",
+                            tint = Color.Gray
+                        )
+                    }
+                }
+
+                Divider(color = Color(0xFF262A3B))
+
                 Text(
-                    text = "أقسام واستوديوهات التطبيق 🚀",
+                    text = "الأقسام والاستوديوهات",
                     fontWeight = FontWeight.Bold,
-                    fontSize = 17.sp,
-                    color = TextPrimary,
-                    textAlign = TextAlign.End,
-                    modifier = Modifier.fillMaxWidth()
+                    fontSize = 13.sp,
+                    color = TextSecondary
                 )
 
-                // 1. All Widgets Studio
                 DrawerNavigationTile(
-                    title = "استوديو ومحرر الويدجات (${NumeralFormatter.formatNumber(viewModel.allWidgets.collectAsState().value.size, useArabicNumerals)})",
+                    title = "متصفح ARNA و ARNA AI 🌐",
+                    subtitle = "ترجمة، حفظ، تنزيل، سجل وإعدادات متكاملة",
+                    icon = Icons.Default.Language,
+                    tint = Color(0xFF06B6D4),
+                    onClick = {
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.InAppBrowser())
+                    }
+                )
+
+                DrawerNavigationTile(
+                    title = "استوديو الثيمات والويدجات (${NumeralFormatter.formatNumber(allWidgets.size, useArabicNumerals)})",
                     subtitle = "تخصيص وتصميم ويدجات الشاشة الرئيسية",
                     icon = Icons.Default.Widgets,
                     tint = Color(0xFF38BDF8),
                     onClick = {
-                        showNavigationDrawerSheet = false
+                        showTopBarWindow = false
                         viewModel.navigateTo(AppScreen.AllWidgets)
                     }
                 )
 
-                // 2. AI Image to Widget
                 DrawerNavigationTile(
-                    title = "تحويل الصور إلى ويدجت بالذكاء 🪄",
-                    subtitle = "مطابقة صور الشاشات واستخراج الألوان محلياً",
-                    icon = Icons.Default.AutoAwesome,
-                    tint = Color(0xFFA855F7),
+                    title = "مركز تنزيل الملفات والفيديوهات 📥",
+                    subtitle = "تنزيل من الروابط بكافة الجودات",
+                    icon = Icons.Default.Download,
+                    tint = Color(0xFF2563EB),
                     onClick = {
-                        showNavigationDrawerSheet = false
-                        viewModel.navigateTo(AppScreen.AiImageWidgetStudio)
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.MediaDownloader)
                     }
                 )
 
-                // 3. Keyboard & Wallpaper Studio
                 DrawerNavigationTile(
-                    title = "استوديو لوحة المفاتيح والخلفيات ⌨️",
-                    subtitle = "سمات كيبورد تفاعلية وخلفيات بدون نت",
-                    icon = Icons.Default.Keyboard,
-                    tint = Color(0xFF10B981),
+                    title = "مشغل الفيديوهات عالي الدقة 🎬",
+                    subtitle = "تشغيل الفيديوهات المحلية والمحملة",
+                    icon = Icons.Default.Videocam,
+                    tint = Color(0xFFEF4444),
                     onClick = {
-                        showNavigationDrawerSheet = false
-                        viewModel.navigateTo(AppScreen.KeyboardStudio)
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.VideoPlayer())
                     }
                 )
 
-                // 4. Alerts & Reminders Studio
                 DrawerNavigationTile(
-                    title = "استوديو التنبيهات والمواعيد ⏰",
-                    subtitle = "منبهات صلاة، تذكيرات مخصصة بنغمات",
+                    title = "استوديو التنبيهات ومواقيت الصلاة ⏰",
+                    subtitle = "منبهات صلاة وتذكيرات مخصصة",
                     icon = Icons.Default.Alarm,
                     tint = Color(0xFFEAB308),
                     onClick = {
-                        showNavigationDrawerSheet = false
+                        showTopBarWindow = false
                         viewModel.navigateTo(AppScreen.AlertsStudio)
                     }
                 )
 
-                // 5. Hidden Apps Vault
+                DrawerNavigationTile(
+                    title = "لوحة المفاتيح والخلفيات ⌨️",
+                    subtitle = "سمات كيبورد تفاعلية وخلفيات مخصصة",
+                    icon = Icons.Default.Keyboard,
+                    tint = Color(0xFF10B981),
+                    onClick = {
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.KeyboardStudio)
+                    }
+                )
+
+                DrawerNavigationTile(
+                    title = "تحويل الصور إلى ويدجت 🪄",
+                    subtitle = "استخراج الألوان وتنسيق الويدجت",
+                    icon = Icons.Default.AutoAwesome,
+                    tint = Color(0xFFA855F7),
+                    onClick = {
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.AiImageWidgetStudio)
+                    }
+                )
+
                 DrawerNavigationTile(
                     title = "خزنة التطبيقات المخفية 🔒",
                     subtitle = "حماية الخصوصية برمز مرور محلي",
                     icon = Icons.Default.Lock,
                     tint = Color(0xFFF43F5E),
                     onClick = {
-                        showNavigationDrawerSheet = false
+                        showTopBarWindow = false
                         viewModel.navigateTo(AppScreen.HiddenAppsVault)
                     }
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                DrawerNavigationTile(
+                    title = "الإعدادات الكاملة ⚙️",
+                    subtitle = "اللغة، تنسيق الأرقام، المظهر والخلفيات",
+                    icon = Icons.Default.Settings,
+                    tint = Color(0xFFEAB308),
+                    onClick = {
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.Settings)
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }

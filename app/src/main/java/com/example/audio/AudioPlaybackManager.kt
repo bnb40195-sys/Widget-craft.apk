@@ -88,26 +88,49 @@ object AudioPlaybackManager {
         "محمود خليل الحصري"
     )
 
+    private var currentSurahIndex = 0
+
     fun playSurah(context: Context, surah: QuranSurahItem, reciterName: String = reciters[0]) {
         stop()
         try {
+            val idx = availableSurahs.indexOfFirst { it.name == surah.name }
+            if (idx != -1) currentSurahIndex = idx
+
             _currentTrackTitle.value = surah.name
             _currentReciter.value = "القارئ: $reciterName"
             _currentAyahText.value = surah.ayahText
 
-            mediaPlayer = MediaPlayer.create(context.applicationContext, surah.rawResId).apply {
-                isLooping = true
-                setOnCompletionListener {
+            val mp = MediaPlayer.create(context.applicationContext, surah.rawResId)
+            if (mp != null) {
+                mp.isLooping = true
+                mp.setOnErrorListener { _, _, _ ->
+                    _isPlaying.value = false
+                    true
+                }
+                mp.setOnCompletionListener {
                     _isPlaying.value = false
                     _progress.value = 0f
                 }
-                start()
+                mp.start()
+                mediaPlayer = mp
+                _isPlaying.value = true
+                startProgressTracker()
+            } else {
+                _isPlaying.value = false
             }
-            _isPlaying.value = true
-            startProgressTracker()
         } catch (e: Exception) {
             _isPlaying.value = false
         }
+    }
+
+    fun playNextSurah(context: Context) {
+        currentSurahIndex = (currentSurahIndex + 1) % availableSurahs.size
+        playSurah(context, availableSurahs[currentSurahIndex])
+    }
+
+    fun playPreviousSurah(context: Context) {
+        currentSurahIndex = if (currentSurahIndex > 0) currentSurahIndex - 1 else availableSurahs.size - 1
+        playSurah(context, availableSurahs[currentSurahIndex])
     }
 
     fun playAdhan(context: Context) {
@@ -117,15 +140,23 @@ object AudioPlaybackManager {
             _currentReciter.value = "أذان الحرم المكي الشريف"
             _currentAyahText.value = "حَانَ الآنَ مَوْعِدُ الصَّلَاةِ • حَيَّ عَلَى الصَّلَاةِ، حَيَّ عَلَى الْفَلَاحِ"
 
-            mediaPlayer = MediaPlayer.create(context.applicationContext, R.raw.adhan_chime).apply {
-                setOnCompletionListener {
+            val mp = MediaPlayer.create(context.applicationContext, R.raw.adhan_chime)
+            if (mp != null) {
+                mp.setOnErrorListener { _, _, _ ->
+                    _isPlaying.value = false
+                    true
+                }
+                mp.setOnCompletionListener {
                     _isPlaying.value = false
                     _progress.value = 0f
                 }
-                start()
+                mp.start()
+                mediaPlayer = mp
+                _isPlaying.value = true
+                startProgressTracker()
+            } else {
+                _isPlaying.value = false
             }
-            _isPlaying.value = true
-            startProgressTracker()
         } catch (e: Exception) {
             _isPlaying.value = false
         }
@@ -136,19 +167,26 @@ object AudioPlaybackManager {
         try {
             _currentTrackTitle.value = title
             _currentReciter.value = "تسجيل صوتي خارجي"
-            _currentAyahText.value = "تشغيل ملف صوتي من الهاتف بدون نت"
+            _currentAyahText.value = "تشغيل ملف صوتي من الهاتف"
 
-            mediaPlayer = MediaPlayer().apply {
+            val mp = MediaPlayer().apply {
                 setDataSource(context.applicationContext, uri)
-                prepare()
+                setOnErrorListener { _, _, _ ->
+                    _isPlaying.value = false
+                    true
+                }
+                setOnPreparedListener { player ->
+                    player.start()
+                    _isPlaying.value = true
+                    startProgressTracker()
+                }
                 setOnCompletionListener {
                     _isPlaying.value = false
                     _progress.value = 0f
                 }
-                start()
+                prepareAsync()
             }
-            _isPlaying.value = true
-            startProgressTracker()
+            mediaPlayer = mp
         } catch (e: Exception) {
             _isPlaying.value = false
         }
@@ -157,13 +195,17 @@ object AudioPlaybackManager {
     fun togglePlayPause(context: Context) {
         val player = mediaPlayer
         if (player != null) {
-            if (player.isPlaying) {
-                player.pause()
+            try {
+                if (player.isPlaying) {
+                    player.pause()
+                    _isPlaying.value = false
+                } else {
+                    player.start()
+                    _isPlaying.value = true
+                    startProgressTracker()
+                }
+            } catch (e: Exception) {
                 _isPlaying.value = false
-            } else {
-                player.start()
-                _isPlaying.value = true
-                startProgressTracker()
             }
         } else {
             // Start default surah
@@ -172,30 +214,38 @@ object AudioPlaybackManager {
     }
 
     fun pause() {
-        mediaPlayer?.let {
-            if (it.isPlaying) {
-                it.pause()
-                _isPlaying.value = false
+        val player = mediaPlayer
+        if (player != null) {
+            try {
+                if (player.isPlaying) {
+                    player.pause()
+                }
+            } catch (e: Exception) {
+                // ignore
             }
+            _isPlaying.value = false
         }
     }
 
     fun stop() {
         progressJob?.cancel()
         progressJob = null
-        mediaPlayer?.let {
+        val player = mediaPlayer
+        mediaPlayer = null
+        _isPlaying.value = false
+        _progress.value = 0f
+        if (player != null) {
             try {
-                if (it.isPlaying) {
-                    it.stop()
+                player.setOnErrorListener { _, _, _ -> true }
+                if (player.isPlaying) {
+                    player.pause()
                 }
-                it.release()
+                player.reset()
+                player.release()
             } catch (e: Exception) {
                 // ignore
             }
         }
-        mediaPlayer = null
-        _isPlaying.value = false
-        _progress.value = 0f
     }
 
     private fun startProgressTracker() {

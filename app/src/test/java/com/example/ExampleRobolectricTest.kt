@@ -35,14 +35,14 @@ class ExampleRobolectricTest {
     fun `read string from context`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         val appName = context.getString(R.string.app_name)
-        assertEquals("WidgetCraft", appName)
+        assertEquals("الثيمات", appName)
     }
 
     @Test
     fun `test widget json export and import`() {
         val original = WidgetConfig(
             name = "ساعة المطر النيونية",
-            tagline = "ساعة بدون نت مع الثواني",
+            tagline = "ساعة مميزة مع الثواني",
             type = WidgetType.DIGITAL_CLOCK,
             theme = WidgetTheme.CYBER_NEON,
             cornerRadiusDp = 26,
@@ -60,7 +60,7 @@ class ExampleRobolectricTest {
 
         val imported = parsedResult.getOrThrow()
         assertEquals("ساعة المطر النيونية", imported.name)
-        assertEquals("ساعة بدون نت مع الثواني", imported.tagline)
+        assertEquals("ساعة مميزة مع الثواني", imported.tagline)
         assertEquals(WidgetType.DIGITAL_CLOCK, imported.type)
         assertEquals(WidgetTheme.CYBER_NEON, imported.theme)
         assertEquals(26, imported.cornerRadiusDp)

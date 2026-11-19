@@ -25,10 +25,10 @@ class WidgetAlertReceiver : BroadcastReceiver() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 channelId,
-                "تنبيهات وتذكيرات الويدجات بدون نت",
+                "تنبيهات وتذكيرات الويدجات",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
-                description = "تنبيهات مواعيد وتذكيرات مهام الويدجات بدون نت"
+                description = "تنبيهات مواعيد وتذكيرات مهام الويدجات"
                 enableVibration(vibrate)
             }
             notificationManager.createNotificationChannel(channel)
@@ -36,16 +36,21 @@ class WidgetAlertReceiver : BroadcastReceiver() {
 
         val soundEnabled = intent.getBooleanExtra("EXTRA_SOUND_ENABLED", true)
         val soundId = intent.getStringExtra("EXTRA_SOUND_ID") ?: "alert_sound"
+        val customAudioUri = intent.getStringExtra("EXTRA_CUSTOM_AUDIO_URI")
 
         if (soundEnabled && soundId != "silent") {
             try {
-                val soundRes = when (soundId) {
-                    "adhan_chime" -> R.raw.adhan_chime
-                    "quran_recitation" -> R.raw.quran_recitation
-                    "alert_sound" -> R.raw.alert_sound
-                    else -> R.raw.alert_sound
+                val mp = if (!customAudioUri.isNullOrBlank()) {
+                    android.media.MediaPlayer.create(context, android.net.Uri.parse(customAudioUri))
+                } else {
+                    val soundRes = when (soundId) {
+                        "adhan_chime" -> R.raw.adhan_chime
+                        "quran_recitation" -> R.raw.quran_recitation
+                        "alert_sound" -> R.raw.alert_sound
+                        else -> R.raw.alert_sound
+                    }
+                    android.media.MediaPlayer.create(context, soundRes)
                 }
-                val mp = android.media.MediaPlayer.create(context, soundRes)
                 mp?.setOnCompletionListener { it.release() }
                 mp?.start()
             } catch (e: Exception) {

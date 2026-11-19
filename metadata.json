@@ -1,6 +1,6 @@
 {
-  "name": "WidgetCraft",
-  "description": "صانع ومحرر الويدجات وتصميمها واستيرادها من الخارج مع العمل بالكامل بدون إنترنت",
+  "name": "الثيمات",
+  "description": "تطبيق الثيمات والويدجات، وتخصيص الشاشة الرئيسية وتوليد الخلفيات والسمات بالكامل",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

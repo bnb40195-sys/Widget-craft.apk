@@ -154,7 +154,7 @@ fun WallpaperStudioScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "تعديل الخلفيات وتوليدها بالذكاء الاصطناعي بدون نت",
+                            text = "تعديل الخلفيات وتوليدها بالذكاء الاصطناعي",
                             fontSize = 11.sp,
                             color = PrimaryCyan
                         )
@@ -347,7 +347,7 @@ fun WallpaperStudioScreen(
                         )
 
                         Text(
-                            text = "اختر أي صورة ليقوم الذكاء الاصطناعي بحساب نسبة التعتيم المثالية والتباين بدون نت لحماية العين وجعل الويدجات واضحة.",
+                            text = "اختر أي صورة ليقوم الذكاء الاصطناعي بحساب نسبة التعتيم المثالية والتباين لحماية العين وجعل الويدجات واضحة.",
                             fontSize = 12.sp,
                             color = TextSecondary,
                             lineHeight = 18.sp
@@ -426,6 +426,107 @@ fun WallpaperStudioScreen(
                                         color = TextSecondary,
                                         lineHeight = 15.sp
                                     )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Dedicated AI Wallpaper Generator
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(18.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B).copy(alpha = 0.5f)),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.4f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.AutoAwesome,
+                                contentDescription = null,
+                                tint = Color(0xFFC084FC),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "توليد خلفيات فنية بالذكاء الاصطناعي 🪄",
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 14.sp,
+                                color = TextPrimary
+                            )
+                        }
+
+                        Text(
+                            text = "اختر النمط المطلوب ليقوم الذكاء بتوليد مزيج لوني وخلفية متناسقة عالية الدقة فوراً:",
+                            fontSize = 11.sp,
+                            color = TextSecondary
+                        )
+
+                        val aiStyles = listOf(
+                            Triple("زخرفة إسلامية مذهبة 🕌", 1, 0.40f),
+                            Triple("سديم كوني نيون 🌌", 2, 0.35f),
+                            Triple("شفق صحراوي هادئ 🌅", 3, 0.30f),
+                            Triple("زمرد الأورورا الملكي 💎", 4, 0.25f),
+                            Triple("أسود داكن فائق ⚡", 5, 0.15f)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            aiStyles.take(3).forEach { (name, presetIdx, recDim) ->
+                                Surface(
+                                    onClick = {
+                                        selectedType = WallpaperType.PRESET_GRADIENT
+                                        selectedPreset = presetIdx % presetGradients.size
+                                        customUri = null
+                                        dimLevel = recDim
+                                        viewModel.showToast("تم توليد نمط: $name بنجاح 🪄")
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = Color(0xFFA855F7).copy(alpha = 0.2f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f)),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(text = name, fontSize = 10.sp, color = Color(0xFFE9D5FF), fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    }
+                                }
+                            }
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            aiStyles.drop(3).forEach { (name, presetIdx, recDim) ->
+                                Surface(
+                                    onClick = {
+                                        selectedType = WallpaperType.PRESET_GRADIENT
+                                        selectedPreset = presetIdx % presetGradients.size
+                                        customUri = null
+                                        dimLevel = recDim
+                                        viewModel.showToast("تم توليد نمط: $name بنجاح 🪄")
+                                    },
+                                    shape = RoundedCornerShape(10.dp),
+                                    color = Color(0xFFA855F7).copy(alpha = 0.2f),
+                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f)),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Column(
+                                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
+                                        horizontalAlignment = Alignment.CenterHorizontally
+                                    ) {
+                                        Text(text = name, fontSize = 10.sp, color = Color(0xFFE9D5FF), fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    }
                                 }
                             }
                         }

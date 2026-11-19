@@ -38,7 +38,7 @@ object OnlineWidgetsCatalog {
             id = "pub_ai_vision_monochrome",
             titleAr = "ساعة تايبوغرافي مستخرجة بالذكاء الاصطناعي",
             titleEn = "AI Vision Extracted Minimal Monochrome Clock",
-            description = "تمت مطابقة هذا التصميم وتحليله بالكامل من صورة خارجية عبر الذكاء الاصطناعي مع استخراج الألوان وتوليد ويدجت يعمل 100% بدون نت.",
+            description = "تمت مطابقة هذا التصميم وتحليله بالكامل من صورة خارجية عبر الذكاء الاصطناعي مع استخراج الألوان وتوليد ويدجت مخصص.",
             publisherName = "استوديو الذكاء الاصطناعي (AI Studio)",
             publisherCountry = "🇩🇿 الجزائر",
             publishDate = "منذ ساعة",
@@ -51,7 +51,7 @@ object OnlineWidgetsCatalog {
             widgetConfig = WidgetConfig(
                 id = "online_ai_monochrome",
                 name = "ساعة تايبوغرافي بالذكاء الاصطناعي",
-                tagline = "مطابقة ذكية 100% بدون نت",
+                tagline = "مطابقة ذكية مميزة",
                 type = WidgetType.DIGITAL_CLOCK,
                 theme = WidgetTheme.MINIMAL_WHITE,
                 cornerRadiusDp = 22,
@@ -79,7 +79,7 @@ object OnlineWidgetsCatalog {
             widgetConfig = WidgetConfig(
                 id = "online_ai_cyber_pulse",
                 name = "رادار نيون بالذكاء الاصطناعي",
-                tagline = "طقس وحرارة مطابقة ذكياً بدون نت",
+                tagline = "طقس وحرارة مطابقة ذكياً",
                 type = WidgetType.WEATHER_TEMP,
                 theme = WidgetTheme.CYBER_NEON,
                 cornerRadiusDp = 24,
@@ -250,7 +250,7 @@ object OnlineWidgetsCatalog {
             widgetConfig = WidgetConfig(
                 id = "online_widgetopia_pulse",
                 name = "مراقب النظام (Widgetopia)",
-                tagline = "مؤشر حي للبطارية والرام بدون نت",
+                tagline = "مؤشر حي للبطارية والرام",
                 type = WidgetType.BATTERY_DEVICE,
                 theme = WidgetTheme.FROSTED_GLASS,
                 cornerRadiusDp = 20,
@@ -347,7 +347,7 @@ object OnlineWidgetsCatalog {
             id = "pub_quran_audio_mishary",
             titleAr = "مصحف الفاتحة الصوتي التفاعلي",
             titleEn = "Interactive Quran Audio Widget",
-            description = "ويدجت تلاوة القرآن الكريم بصوت القارئ مشاري راشد العفاسي مع أزرار تشغيل وإيقاف فورية تعمل بدون إنترنت بعد التنزيل.",
+            description = "ويدجت تلاوة القرآن الكريم بصوت القارئ مشاري راشد العفاسي مع أزرار تشغيل وإيقاف فورية مباشرة.",
             publisherName = "دار الإيمان للتصميم",
             publisherCountry = "🇩🇿 الجزائر",
             publishDate = "منذ يومين",
@@ -568,7 +568,7 @@ object OnlineWidgetsCatalog {
                 // Default high-profile Widgetopia curation
                 Quint(
                     "ويدجت مستورد من Widgetopia",
-                    "تصميم عالمي مفلتر ومحفوظ محلياً بدون نت",
+                    "تصميم عالمي مفلتر ومحفوظ محلياً",
                     WidgetType.DIGITAL_CLOCK,
                     WidgetTheme.OLED_MIDNIGHT,
                     WidgetSize.MEDIUM_4x2

@@ -1,7 +1,10 @@
 package com.example.ui.screens
 
 import android.media.MediaPlayer
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -83,7 +86,8 @@ data class AlertSoundPreset(
     val id: String,
     val title: String,
     val iconDesc: String,
-    val resId: Int?
+    val resId: Int?,
+    val customUri: String? = null
 )
 
 val availableAlertSounds = listOf(
@@ -121,7 +125,7 @@ fun AlertsStudioScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "منبهات وتذكيرات مهام بدون نت",
+                            text = "منبهات وتذكيرات مهام مخصصة",
                             fontSize = 11.sp,
                             color = PrimaryCyan
                         )
@@ -258,7 +262,7 @@ fun AlertsStudioScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "يمكنك كتابة التوقيت يدوياً واختيار صوت الأذان أو التنبيه وتعمل التنبيهات حتى عند إغلاق التطبيق وبدون نت.",
+                                text = "يمكنك كتابة التوقيت يدوياً واختيار صوت الأذان أو التنبيه وتعمل التنبيهات حتى عند إغلاق التطبيق.",
                                 fontSize = 11.sp,
                                 color = TextSecondary,
                                 lineHeight = 16.sp
@@ -411,13 +415,6 @@ fun AddAlertDialog(
     var previewPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
     var isPreviewing by remember { mutableStateOf(false) }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            previewPlayer?.release()
-            previewPlayer = null
-        }
-    }
-
     fun stopPreview() {
         previewPlayer?.stop()
         previewPlayer?.release()
@@ -427,9 +424,14 @@ fun AddAlertDialog(
 
     fun playPreview(sound: AlertSoundPreset) {
         stopPreview()
-        if (sound.resId != null) {
-            try {
-                val mp = MediaPlayer.create(context, sound.resId)
+        try {
+            val mp = if (sound.customUri != null) {
+                MediaPlayer.create(context, Uri.parse(sound.customUri))
+            } else if (sound.resId != null) {
+                MediaPlayer.create(context, sound.resId)
+            } else null
+
+            if (mp != null) {
                 previewPlayer = mp
                 mp.setOnCompletionListener {
                     isPreviewing = false
@@ -437,9 +439,33 @@ fun AddAlertDialog(
                 }
                 mp.start()
                 isPreviewing = true
-            } catch (e: Exception) {
-                isPreviewing = false
             }
+        } catch (e: Exception) {
+            isPreviewing = false
+        }
+    }
+
+    val audioPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        if (uri != null) {
+            val fileName = uri.lastPathSegment?.substringAfterLast('/') ?: "صوت من الهاتف"
+            val customPreset = AlertSoundPreset(
+                id = "custom_phone_audio",
+                title = "صوت مخصص: $fileName",
+                iconDesc = "📱",
+                resId = null,
+                customUri = uri.toString()
+            )
+            selectedSound = customPreset
+            playPreview(customPreset)
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            previewPlayer?.release()
+            previewPlayer = null
         }
     }
 
@@ -677,6 +703,28 @@ fun AddAlertDialog(
                                 }
                             }
                         }
+
+                        // Upload Audio from Phone button
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = Color(0xFF1E293B),
+                            border = BorderStroke(1.dp, PrimaryCyan.copy(alpha = 0.5f)),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { audioPickerLauncher.launch("audio/*") }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 10.dp, horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(Icons.Default.VolumeUp, contentDescription = null, tint = PrimaryCyan, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("📁 رفع صوت مخصص من ذاكرة الهاتف (MP3/WAV)", color = PrimaryCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
                     }
                 }
 
@@ -732,7 +780,8 @@ fun AddAlertDialog(
                         vibrateEnabled = vibrate,
                         soundEnabled = selectedSound.id != "silent",
                         soundId = selectedSound.id,
-                        soundTitle = "${selectedSound.iconDesc} ${selectedSound.title}"
+                        soundTitle = "${selectedSound.iconDesc} ${selectedSound.title}",
+                        customAudioUri = selectedSound.customUri
                     )
                     onSave(alert)
                 },

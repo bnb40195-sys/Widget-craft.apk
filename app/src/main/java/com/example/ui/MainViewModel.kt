@@ -39,13 +39,16 @@ sealed class AppScreen {
     data class Editor(val widgetId: String? = null, val baseTemplate: WidgetConfig? = null) : AppScreen()
     object Import : AppScreen()
     object AllWidgets : AppScreen()
-    object LiveSandbox : AppScreen()
     object WallpaperStudio : AppScreen()
     object ShortcutsStudio : AppScreen()
     object KeyboardStudio : AppScreen()
     object HiddenAppsVault : AppScreen()
     object AlertsStudio : AppScreen()
     object AiImageWidgetStudio : AppScreen()
+    object MediaDownloader : AppScreen()
+    data class VideoPlayer(val videoUri: String? = null, val videoTitle: String? = null) : AppScreen()
+    data class InAppBrowser(val url: String = "") : AppScreen()
+    object Settings : AppScreen()
 }
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -219,7 +222,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             type = "text/plain"
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
-        val shareIntent = Intent.createChooser(sendIntent, "مشاركة كود الويدجت بدون نت").apply {
+        val shareIntent = Intent.createChooser(sendIntent, "مشاركة كود الويدجت").apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
         getApplication<Application>().startActivity(shareIntent)
@@ -235,7 +238,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 updatedAt = System.currentTimeMillis()
             )
             repository.saveWidget(offlineConfig)
-            showToast("تم تنزيل \"${config.name}\" بنجاح! متاح 100% بدون نت ⚡")
+            showToast("تم تنزيل \"${config.name}\" بنجاح! متاح للاستخدام فوراً ⚡")
             onComplete?.invoke()
         }
     }
@@ -250,7 +253,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 updatedAt = System.currentTimeMillis()
             )
             repository.saveWidget(offlineConfig)
-            showToast("تم حفظ الويدجت المولد بالذكاء الاصطناعي بنجاح! متاح 100% بدون نت 🪄")
+            showToast("تم حفظ الويدجت المولد بالذكاء الاصطناعي بنجاح! متاح للاستخدام فوراً 🪄")
             onComplete?.invoke()
         }
     }
@@ -492,6 +495,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             putExtra("EXTRA_VIBRATE", alert.vibrateEnabled)
             putExtra("EXTRA_SOUND_ENABLED", alert.soundEnabled)
             putExtra("EXTRA_SOUND_ID", alert.soundId)
+            putExtra("EXTRA_CUSTOM_AUDIO_URI", alert.customAudioUri)
         }
         context.sendBroadcast(intent)
         showToast("تم إطلاق التنبيه التجريبي الآن: ${alert.soundTitle}")
@@ -508,6 +512,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             putExtra("EXTRA_VIBRATE", alert.vibrateEnabled)
             putExtra("EXTRA_SOUND_ENABLED", alert.soundEnabled)
             putExtra("EXTRA_SOUND_ID", alert.soundId)
+            putExtra("EXTRA_CUSTOM_AUDIO_URI", alert.customAudioUri)
         }
         val pendingIntent = PendingIntent.getBroadcast(
             context,

@@ -1,6 +1,6 @@
 <resources>
-    <string name="app_name">WidgetCraft</string>
-    <string name="app_subtitle">صانع ومحرر الويدجات</string>
-    <string name="widget_provider_label">ويدجت WidgetCraft المخصص</string>
-    <string name="widget_provider_desc">يعرض الويدجت النشط الذي قمت بتصميمه أو استيراده بدون إنترنت</string>
+    <string name="app_name">الثيمات</string>
+    <string name="app_subtitle">تطبيق الثيمات والويدجات</string>
+    <string name="widget_provider_label">ويدجت تطبيق الثيمات المخصص</string>
+    <string name="widget_provider_desc">يعرض الويدجت النشط الذي قمت بتصميمه أو اختياره مباشرة</string>
 </resources>

@@ -267,6 +267,7 @@ class StudioPreferencesRepository(private val context: Context) {
             obj.put("soundEnabled", a.soundEnabled)
             obj.put("soundId", a.soundId)
             obj.put("soundTitle", a.soundTitle)
+            obj.put("customAudioUri", a.customAudioUri ?: "")
             obj.put("vibrateEnabled", a.vibrateEnabled)
             obj.put("linkedWidgetId", a.linkedWidgetId ?: "")
             obj.put("isEnabled", a.isEnabled)
@@ -324,6 +325,7 @@ class StudioPreferencesRepository(private val context: Context) {
                         soundEnabled = obj.optBoolean("soundEnabled", true),
                         soundId = obj.optString("soundId", "alert_sound"),
                         soundTitle = obj.optString("soundTitle", "رنين التنبيه 🔔"),
+                        customAudioUri = obj.optString("customAudioUri").ifEmpty { null },
                         vibrateEnabled = obj.optBoolean("vibrateEnabled", true),
                         linkedWidgetId = obj.optString("linkedWidgetId").ifEmpty { null },
                         isEnabled = obj.optBoolean("isEnabled", true),

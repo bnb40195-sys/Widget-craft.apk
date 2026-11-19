@@ -7,6 +7,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -22,12 +24,15 @@ import com.example.ui.screens.AlertsStudioScreen
 import com.example.ui.screens.HiddenAppsVaultScreen
 import com.example.ui.screens.HomeScreen
 import com.example.ui.screens.KeyboardStudioScreen
-import com.example.ui.screens.LiveSandboxScreen
+import com.example.ui.screens.MediaDownloaderScreen
+import com.example.ui.screens.VideoPlayerScreen
+import com.example.ui.screens.SettingsScreen
 import com.example.ui.screens.AllWidgetsScreen
 import com.example.ui.screens.ShortcutsStudioScreen
 import com.example.ui.screens.WallpaperStudioScreen
 import com.example.ui.screens.WidgetEditorScreen
 import com.example.ui.screens.WidgetImportScreen
+import com.example.ui.screens.InAppBrowserScreen
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.MyApplicationTheme
 
@@ -51,7 +56,13 @@ class MainActivity : ComponentActivity() {
 
                     AnimatedContent(
                         targetState = currentScreen,
-                        transitionSpec = { fadeIn() togetherWith fadeOut() },
+                        transitionSpec = {
+                            if (targetState is AppScreen.InAppBrowser || initialState is AppScreen.InAppBrowser) {
+                                EnterTransition.None togetherWith ExitTransition.None
+                            } else {
+                                fadeIn() togetherWith fadeOut()
+                            }
+                        },
                         label = "ScreenTransition"
                     ) { screen ->
                         when (screen) {
@@ -63,13 +74,20 @@ class MainActivity : ComponentActivity() {
                                 baseTemplate = screen.baseTemplate
                             )
                             is AppScreen.Import -> WidgetImportScreen(viewModel = viewModel)
-                            is AppScreen.LiveSandbox -> LiveSandboxScreen(viewModel = viewModel)
+                            is AppScreen.MediaDownloader -> MediaDownloaderScreen(viewModel = viewModel)
+                            is AppScreen.VideoPlayer -> VideoPlayerScreen(
+                                viewModel = viewModel,
+                                initialVideoUri = screen.videoUri,
+                                initialVideoTitle = screen.videoTitle
+                            )
+                            is AppScreen.Settings -> SettingsScreen(viewModel = viewModel)
                             is AppScreen.WallpaperStudio -> WallpaperStudioScreen(viewModel = viewModel)
                             is AppScreen.ShortcutsStudio -> ShortcutsStudioScreen(viewModel = viewModel)
                             is AppScreen.KeyboardStudio -> KeyboardStudioScreen(viewModel = viewModel)
                             is AppScreen.HiddenAppsVault -> HiddenAppsVaultScreen(viewModel = viewModel)
                             is AppScreen.AlertsStudio -> AlertsStudioScreen(viewModel = viewModel)
                             is AppScreen.AiImageWidgetStudio -> AiImageWidgetStudioScreen(viewModel = viewModel)
+                            is AppScreen.InAppBrowser -> InAppBrowserScreen(viewModel = viewModel, initialUrl = screen.url)
                         }
                     }
                 }

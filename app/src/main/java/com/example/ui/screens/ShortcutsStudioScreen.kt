@@ -137,7 +137,7 @@ fun ShortcutsStudioScreen(
                             color = TextPrimary
                         )
                         Text(
-                            text = "إضافة أي تطبيق أو APK أو رابط خارجي لمركز الإشعارات بدون نت",
+                            text = "إضافة أي تطبيق أو APK أو رابط خارجي لمركز الإشعارات مباشرة",
                             fontSize = 11.sp,
                             color = PrimaryCyan
                         )

@@ -172,7 +172,7 @@ fun HiddenAppsVaultScreen(
                 )
 
                 Text(
-                    text = "الرمز الافتراضي هو 1234 (محلي بدون نت)",
+                    text = "الرمز الافتراضي هو 1234",
                     fontSize = 12.sp,
                     color = TextSecondary
                 )

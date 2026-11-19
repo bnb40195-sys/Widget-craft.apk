@@ -75,7 +75,7 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_tally_dhikr",
             name = "عداد التسبيح والأذكار",
-            tagline = "عداد إلكتروني تفاعلي بدون نت مع زر زيادة سريع",
+            tagline = "عداد إلكتروني تفاعلي مع زر زيادة سريع",
             type = WidgetType.HABIT_COUNTER,
             theme = WidgetTheme.EMERALD_MINT,
             cornerRadiusDp = 24,
@@ -146,7 +146,7 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_prayers_oran",
             name = "مواقيت الصلاة (Oran, Algeria)",
-            tagline = "مواقيت الصلاة الدقيقة والعد التنازلي للأذان القادم بدون نت",
+            tagline = "مواقيت الصلاة الدقيقة والعد التنازلي للأذان القادم",
             type = WidgetType.PRAYER_TIMES,
             theme = WidgetTheme.CYBER_NEON,
             cornerRadiusDp = 22,
@@ -190,7 +190,7 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_quran_audio",
             name = "ويدجت القرآن الكريم الصوتي",
-            tagline = "مشغل تلاوات القرآن الكريم العطرة بصوت كبار القراء بدون نت",
+            tagline = "مشغل تلاوات القرآن الكريم العطرة بصوت كبار القراء",
             type = WidgetType.QURAN_AUDIO,
             theme = WidgetTheme.EMERALD_MINT,
             cornerRadiusDp = 24,
@@ -203,12 +203,150 @@ object OfflineDataProvider {
         WidgetConfig(
             id = "preset_app_shortcuts",
             name = "شريط اختصارات التطبيقات والمزدوجة",
-            tagline = "شبكة إطلاق سريعة لأهم التطبيقات بأشكال وألوان مخصصة بدون نت",
+            tagline = "شبكة إطلاق سريعة لأهم التطبيقات بأشكال وألوان مخصصة",
             type = WidgetType.APP_SHORTCUTS,
             theme = WidgetTheme.CYBER_NEON,
             cornerRadiusDp = 24,
             size = WidgetSize.MEDIUM_4x2,
             source = "PRESET"
+        ),
+        // 7. Daily Quran Ayah (ويدجت آية قرآنية يومية - كل يوم آية)
+        WidgetConfig(
+            id = "preset_daily_quran_ayah",
+            name = "آية قرآنية يومية (كل يوم آية)",
+            tagline = "نفحات إيمانية وآيات مباركة متجددة يومياً مع التفسير والترقيم",
+            type = WidgetType.DAILY_QURAN_AYAH,
+            theme = WidgetTheme.EMERALD_MINT,
+            cornerRadiusDp = 24,
+            size = WidgetSize.MEDIUM_4x2,
+            quranAyahText = "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+            quranAyahSurah = "سورة الشرح",
+            quranAyahNumber = 6,
+            source = "PRESET"
+        ),
+        // 8. Today in History (ويدجت حدث اليوم - تاريخ وإسلاميات)
+        WidgetConfig(
+            id = "preset_today_in_history",
+            name = "حدث اليوم (تاريخ وإسلاميات)",
+            tagline = "محطات تاريخية وإسلامية بارزة حدثت في مثل هذا اليوم",
+            type = WidgetType.TODAY_IN_HISTORY,
+            theme = WidgetTheme.ROYAL_AMBER,
+            cornerRadiusDp = 24,
+            size = WidgetSize.MEDIUM_4x2,
+            historyEventTitle = "فتح مكة المكرمة",
+            historyEventDate = "20 رمضان 8 هـ",
+            historyEventYear = "630 م",
+            historyEventDescription = "أعظم انتصارات المسلمين ودخول الناس في دين الله أفواجاً وتطهير الكعبة المشرفة من الأصنام.",
+            source = "PRESET"
         )
     )
+
+    val dailyAyahs = listOf(
+        OfflineAyah(
+            "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+            "سورة الشرح",
+            6,
+            "بشرى وتطمين بأن مع كل ضيق فرجاً قريباً"
+        ),
+        OfflineAyah(
+            "وَقُل رَّبِّ زِدْنِي عِلْمًا",
+            "سورة طه",
+            114,
+            "دعاء مبارك لطلب العلم والتوفيق"
+        ),
+        OfflineAyah(
+            "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+            "سورة الرعد",
+            28,
+            "سكينة النفس وراحة الفؤاد بذكر الله"
+        ),
+        OfflineAyah(
+            "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ",
+            "سورة الطلاق",
+            3,
+            "كفاية الله لمن وكل أمره إليه بصدق"
+        ),
+        OfflineAyah(
+            "وَاصْبِرْ لِحُكْمِ رَبِّكَ فَإِنَّكَ بِأَعْيُنِنَا",
+            "سورة الطور",
+            48,
+            "معية الله وحفظه ورعايته للصابرين"
+        ),
+        OfflineAyah(
+            "فَاذْكُرُونِي أَذْكُرْكُمْ وَاشْكُرُوا لِي وَلَا تَكْفُرُونِ",
+            "سورة البقرة",
+            152,
+            "شرف عظيم أن يذكرك الله تعالى في ملأ خير منهم"
+        ),
+        OfflineAyah(
+            "وَإِذَا سَأَلَكَ عِبَادِي عَنِّي فَإِنِّي قَرِيبٌ ۖ أُجِيبُ دَعْوَةَ الدَّاعِ إِذَا دَعَانِ",
+            "سورة البقرة",
+            186,
+            "قرب الله وإجابته لدعاء عباده"
+        )
+    )
+
+    val historicalEvents = listOf(
+        OfflineHistoryEvent(
+            title = "فتح مكة المكرمة",
+            date = "20 رمضان 8 هـ",
+            year = "630 م",
+            description = "أعظم انتصارات المسلمين بقيادة رسول الله ﷺ، وتطهير البيت الحرام وإعلان العفو العام: اذهبوا فأنتم الطلقاء.",
+            category = "غزوات وبطولات إسلامية"
+        ),
+        OfflineHistoryEvent(
+            title = "معركة حطين وتحرير القدس",
+            date = "26 ربيع الثاني 583 هـ",
+            year = "1187 م",
+            description = "انتصار القائد العظيم صلاح الدين الأيوبي في معركة حطين الخالدة وتحرير بيت المقدس والمسجد الأقصى المبارك.",
+            category = "تاريخ إسلامي مجيد"
+        ),
+        OfflineHistoryEvent(
+            title = "معركة عين جالوت",
+            date = "25 رمضان 658 هـ",
+            year = "1260 م",
+            description = "انتصار جيش المسلمين بقيادة سيف الدين قطز والظاهر بيبرس على التتار وإنقاذ العالم الإسلامي والحضارة الإنسانية.",
+            category = "انتصارات حاسمة"
+        ),
+        OfflineHistoryEvent(
+            title = "فتح القسطنطينية",
+            date = "20 جمادى الأولى 857 هـ",
+            year = "1453 م",
+            description = "تحقق بشارة النبي ﷺ بفتح القسطنطينية على يد السلطان العثماني محمد الفاتح رحمه الله.",
+            category = "فتوحات كبرى"
+        ),
+        OfflineHistoryEvent(
+            title = "تأسيس جامع الأزهر الشريف",
+            date = "7 رمضان 361 هـ",
+            year = "972 م",
+            description = "افتتاح الجامع الأزهر في القاهرة ليصبح منارة للعلم الشرعي واللغة العربية وحصناً للأمة الإسلامية عبر القرون.",
+            category = "حضارة وعمارة إسلامية"
+        ),
+        OfflineHistoryEvent(
+            title = "معركة اليرموك الخالدة",
+            date = "5 رجب 15 هـ",
+            year = "636 م",
+            description = "انتصار خالد لجيش المسلمين بقيادة سيف الله المسلول خالد بن الوليد على الروم وفتح بلاد الشام المباركة.",
+            category = "فتوحات إسلامية"
+        )
+    )
+
+    fun getRandomAyah(): OfflineAyah = dailyAyahs.random()
+    fun getRandomHistoryEvent(): OfflineHistoryEvent = historicalEvents.random()
 }
+
+data class OfflineAyah(
+    val ayahText: String,
+    val surahName: String,
+    val ayahNumber: Int,
+    val themeNote: String
+)
+
+data class OfflineHistoryEvent(
+    val title: String,
+    val date: String,
+    val year: String,
+    val description: String,
+    val category: String
+)
+

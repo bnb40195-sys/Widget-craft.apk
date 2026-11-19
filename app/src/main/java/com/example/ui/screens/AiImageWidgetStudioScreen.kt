@@ -159,7 +159,7 @@ fun AiImageWidgetStudioScreen(
             delay(350)
 
             analysisProgressValue = 0.95f
-            analysisProgressText = "بناء هيكل الويدجت التفاعلي بدون نت..."
+            analysisProgressText = "بناء هيكل الويدجت التفاعلي..."
             delay(250)
 
             val result = if (loadedBitmap != null) {
@@ -211,7 +211,7 @@ fun AiImageWidgetStudioScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "حوّل أي صورة إلى ويدجت يعمل بدون نت 100%",
+                                text = "حوّل أي صورة إلى ويدجت تفاعلي مميّز",
                                 fontSize = 11.sp,
                                 color = Color(0xFF34D399)
                             )
@@ -284,7 +284,7 @@ fun AiImageWidgetStudioScreen(
                                     color = Color(0xFF10B981).copy(alpha = 0.25f)
                                 ) {
                                     Text(
-                                        text = "100% بدون نت",
+                                        text = "مميّز وشامل",
                                         color = Color(0xFF34D399),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
@@ -293,7 +293,7 @@ fun AiImageWidgetStudioScreen(
                                 }
                             }
                             Text(
-                                text = "تقوم خوارزميات الذكاء الاصطناعي بتحليل ألوان وخطوط ونمط صورتك، وتبني لك ويدجت مطابقاً تماماً مع استبعاد أي صور للنساء أو الحيوانات أو ذوات الأرواح، ليعمل مباشرة بدون إنترنت!",
+                                text = "تقوم خوارزميات الذكاء الاصطناعي بتحليل ألوان وخطوط ونمط صورتك، وتبني لك ويدجت مطابقاً تماماً مع استبعاد أي صور للنساء أو الحيوانات أو ذوات الأرواح، ليعمل مباشرة وبأعلى دقة!",
                                 fontSize = 11.sp,
                                 color = TextSecondary,
                                 lineHeight = 16.sp
@@ -634,7 +634,7 @@ fun AiImageWidgetStudioScreen(
                                     color = Color(0xFF10B981).copy(alpha = 0.2f)
                                 ) {
                                     Text(
-                                        text = "100% بدون نت",
+                                        text = "جاهز للاستخدام",
                                         color = Color(0xFF34D399),
                                         fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold,
@@ -733,7 +733,7 @@ fun AiImageWidgetStudioScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = if (isSavedLocally) "تم الحفظ والتثبيت على شاشة الهاتف محلياً 📌" else "حفظ وتثبيت على الشاشة الرئيسية بدون نت 📌",
+                                        text = if (isSavedLocally) "تم الحفظ والتثبيت على شاشة الهاتف محلياً 📌" else "حفظ وتثبيت على الشاشة الرئيسية 📌",
                                         color = if (isSavedLocally) Color(0xFF34D399) else DarkBackground,
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 13.sp
@@ -821,7 +821,7 @@ fun AiImageWidgetStudioScreen(
                                     color = Color(0xFF10B981).copy(alpha = 0.2f)
                                 ) {
                                     Text(
-                                        text = "100% بدون نت",
+                                        text = "جاهز فوراً",
                                         color = Color(0xFF34D399),
                                         fontSize = 9.sp,
                                         fontWeight = FontWeight.Bold,
@@ -830,7 +830,7 @@ fun AiImageWidgetStudioScreen(
                                 }
                             }
                             Text(
-                                text = "أضف أي صورة ليقوم الذكاء الاصطناعي بصنع سمة لوحة مفاتيح متناسقة منها وتشغيلها فوراً بدون نت.",
+                                text = "أضف أي صورة ليقوم الذكاء الاصطناعي بصنع سمة لوحة مفاتيح متناسقة منها وتشغيلها فوراً.",
                                 fontSize = 11.sp,
                                 color = TextSecondary,
                                 lineHeight = 16.sp

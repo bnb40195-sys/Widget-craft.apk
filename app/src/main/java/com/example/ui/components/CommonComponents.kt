@@ -19,7 +19,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
@@ -42,7 +42,7 @@ import com.example.ui.theme.PrimaryCyan
 @Composable
 fun OfflineStatusBadge(
     modifier: Modifier = Modifier,
-    text: String = "100% بدون إنترنت"
+    text: String = "مميّز وشامل"
 ) {
     Surface(
         color = Color(0xFF10B981).copy(alpha = 0.15f),
@@ -55,7 +55,7 @@ fun OfflineStatusBadge(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.WifiOff,
+                imageVector = Icons.Default.AutoAwesome,
                 contentDescription = null,
                 tint = Color(0xFF34D399),
                 modifier = Modifier.size(14.dp)

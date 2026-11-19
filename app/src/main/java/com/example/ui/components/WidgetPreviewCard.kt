@@ -35,6 +35,20 @@ import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material.icons.filled.Air
+import androidx.compose.material.icons.filled.MenuBook
+import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SkipPrevious
+import androidx.compose.material.icons.filled.AutoStories
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import com.example.data.model.OfflineDataProvider
+import com.example.data.model.OfflineAyah
+import com.example.data.model.OfflineHistoryEvent
+import com.example.util.NumeralFormatter
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
@@ -46,6 +60,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -93,6 +108,10 @@ fun WidgetPreviewCard(
         val prefs = context.getSharedPreferences("studio_prefs", android.content.Context.MODE_PRIVATE)
         prefs.getBoolean("is_24_hour_format", false)
     }
+    var useArabicNumerals by remember {
+        val prefs = context.getSharedPreferences("studio_prefs", android.content.Context.MODE_PRIVATE)
+        mutableStateOf(prefs.getBoolean("use_arabic_numerals", true))
+    }
     var liveStats by remember { mutableStateOf(DeviceStatsManager.getDeviceStats(context, is24Hour)) }
     var prayerSchedule by remember {
         mutableStateOf(
@@ -115,6 +134,7 @@ fun WidgetPreviewCard(
             delay(1000)
             val prefNow = context.getSharedPreferences("studio_prefs", android.content.Context.MODE_PRIVATE)
             val current24 = prefNow.getBoolean("is_24_hour_format", false)
+            useArabicNumerals = prefNow.getBoolean("use_arabic_numerals", true)
             liveStats = DeviceStatsManager.getDeviceStats(context, current24)
             prayerSchedule = IslamicTimeCalculator.calculatePrayerTimes(
                 city = CityLocation(
@@ -140,7 +160,9 @@ fun WidgetPreviewCard(
         WidgetType.PRAYER_TIMES -> 220.dp
         WidgetType.ISLAMIC_CALENDAR_CARD -> 360.dp
         WidgetType.WEATHER_TEMP -> 125.dp
-        WidgetType.QURAN_AUDIO -> 200.dp
+        WidgetType.QURAN_AUDIO -> 210.dp
+        WidgetType.DAILY_QURAN_AYAH -> 210.dp
+        WidgetType.TODAY_IN_HISTORY -> 210.dp
         else -> when (config.size) {
             WidgetSize.SMALL_2x2 -> 160.dp
             WidgetSize.WIDE_4x1 -> 110.dp
@@ -248,6 +270,12 @@ fun WidgetPreviewCard(
                     WidgetType.QURAN_AUDIO -> {
                         QuranAudioBody(config = config, textColor = textColor, isInteractive = isInteractive)
                     }
+                    WidgetType.DAILY_QURAN_AYAH -> {
+                        DailyQuranAyahBody(config = config, textColor = textColor, isInteractive = isInteractive, useArabicNumerals = useArabicNumerals)
+                    }
+                    WidgetType.TODAY_IN_HISTORY -> {
+                        TodayInHistoryBody(config = config, textColor = textColor, isInteractive = isInteractive, useArabicNumerals = useArabicNumerals)
+                    }
                     WidgetType.APP_SHORTCUTS -> {
                         AppShortcutsWidgetBody(textColor = textColor)
                     }
@@ -294,10 +322,12 @@ fun WidgetPreviewCard(
                     WidgetType.ISLAMIC_CALENDAR_CARD -> "${prayerSchedule.hijriYear} هـ • ${prayerSchedule.gregorianYear} م"
                     WidgetType.WEATHER_TEMP -> "${config.cityName} • ${config.weatherCondition}"
                     WidgetType.QURAN_AUDIO -> config.quranReciterName
+                    WidgetType.DAILY_QURAN_AYAH -> "${config.quranAyahSurah} • آية ${NumeralFormatter.formatNumber(config.quranAyahNumber, useArabicNumerals)}"
+                    WidgetType.TODAY_IN_HISTORY -> "${config.historyEventDate} • ${NumeralFormatter.format(config.historyEventYear, useArabicNumerals)}"
                     WidgetType.DIGITAL_CLOCK -> {
                         val datePart = if (config.showDate) "${liveStats.currentDayNameAr}، ${liveStats.currentDateAr}" else ""
                         val batPart = if (config.showBattery) " • ⚡ ${liveStats.batteryPct}%" else ""
-                        "$datePart$batPart".ifEmpty { "بدون إنترنت" }
+                        "$datePart$batPart".ifEmpty { "الويدجت النشط" }
                     }
                     WidgetType.BATTERY_DEVICE -> "ذاكرة RAM: ${liveStats.freeRamMb} MB متاحة"
                     WidgetType.QUICK_NOTES -> "تحديث مستمر محلياً"
@@ -871,12 +901,30 @@ private fun QuranAudioBody(config: WidgetConfig, textColor: Color, isInteractive
             trackColor = Color.White.copy(alpha = 0.15f)
         )
 
-        // Interactive Play / Pause / Stop Buttons
+        // Interactive Play / Pause / Stop / Prev / Next Buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            IconButton(
+                onClick = {
+                    if (isInteractive) {
+                        AudioPlaybackManager.playPreviousSurah(context)
+                    }
+                },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SkipPrevious,
+                    contentDescription = "السورة السابقة",
+                    tint = textColor.copy(alpha = 0.85f),
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+
             ElevatedButton(
                 onClick = {
                     if (isInteractive) {
@@ -899,8 +947,26 @@ private fun QuranAudioBody(config: WidgetConfig, textColor: Color, isInteractive
                 )
             }
 
+            Spacer(modifier = Modifier.width(8.dp))
+
+            IconButton(
+                onClick = {
+                    if (isInteractive) {
+                        AudioPlaybackManager.playNextSurah(context)
+                    }
+                },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.SkipNext,
+                    contentDescription = "السورة التالية",
+                    tint = textColor.copy(alpha = 0.85f),
+                    modifier = Modifier.size(22.dp)
+                )
+            }
+
             if (isPlaying) {
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
                 IconButton(
                     onClick = {
                         if (isInteractive) {
@@ -914,6 +980,308 @@ private fun QuranAudioBody(config: WidgetConfig, textColor: Color, isInteractive
                         contentDescription = "Stop",
                         tint = Color(0xFFEF4444)
                     )
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// 5B. DAILY QURAN AYAH WIDGET (آية قرآنية يومية - كل يوم آية)
+// -------------------------------------------------------------
+@Composable
+private fun DailyQuranAyahBody(
+    config: WidgetConfig,
+    textColor: Color,
+    isInteractive: Boolean,
+    useArabicNumerals: Boolean
+) {
+    val context = LocalContext.current
+    var currentAyahIndex by remember { mutableIntStateOf(0) }
+    val ayahs = OfflineDataProvider.dailyAyahs
+    val currentAyah = remember(currentAyahIndex, config) {
+        if (currentAyahIndex == 0) {
+            OfflineAyah(
+                ayahText = config.quranAyahText,
+                surahName = config.quranAyahSurah,
+                ayahNumber = config.quranAyahNumber,
+                themeNote = "نفحات إيمانية مباركة"
+            )
+        } else {
+            ayahs[(currentAyahIndex - 1) % ayahs.size]
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Top Header: Quran Icon + "آية اليوم المباركة" + Surah & Ayah Number
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.MenuBook,
+                    contentDescription = null,
+                    tint = Color(0xFF34D399),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = "آية اليوم المباركة",
+                    color = Color(0xFF34D399),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Surface(
+                color = Color.White.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "${currentAyah.surahName} : ${NumeralFormatter.formatNumber(currentAyah.ayahNumber, useArabicNumerals)}",
+                    color = textColor,
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+        }
+
+        // Center Box: Ayah Calligraphy Card
+        Surface(
+            color = Color.Black.copy(alpha = 0.28f),
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF10B981).copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "« ${currentAyah.ayahText} »",
+                    color = Color(0xFFF1F5F9),
+                    fontSize = 14.sp,
+                    fontFamily = FontFamily.Serif,
+                    fontWeight = FontWeight.SemiBold,
+                    lineHeight = 22.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        // Bottom Action Bar: Copy + Next Ayah Toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = currentAyah.themeNote,
+                color = textColor.copy(alpha = 0.7f),
+                fontSize = 10.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Copy Ayah
+                IconButton(
+                    onClick = {
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("Quran Ayah", "« ${currentAyah.ayahText} » [${currentAyah.surahName} - آية ${currentAyah.ayahNumber}]")
+                        cm.setPrimaryClip(clip)
+                        Toast.makeText(context, "تم نسخ الآية الكريمة للحافظة 📋", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "نسخ الآية",
+                        tint = textColor.copy(alpha = 0.8f),
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+
+                // Next Ayah
+                if (isInteractive) {
+                    IconButton(
+                        onClick = {
+                            currentAyahIndex = (currentAyahIndex + 1) % (ayahs.size + 1)
+                        },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "الآية التالية",
+                            tint = Color(0xFF34D399),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// 5C. TODAY IN HISTORY WIDGET (حدث اليوم - تاريخ وإسلاميات)
+// -------------------------------------------------------------
+@Composable
+private fun TodayInHistoryBody(
+    config: WidgetConfig,
+    textColor: Color,
+    isInteractive: Boolean,
+    useArabicNumerals: Boolean
+) {
+    val context = LocalContext.current
+    var currentEventIndex by remember { mutableIntStateOf(0) }
+    val events = OfflineDataProvider.historicalEvents
+    val currentEvent = remember(currentEventIndex, config) {
+        if (currentEventIndex == 0) {
+            OfflineHistoryEvent(
+                title = config.historyEventTitle,
+                date = config.historyEventDate,
+                year = config.historyEventYear,
+                description = config.historyEventDescription,
+                category = "حدث تاريخي إسلامي"
+            )
+        } else {
+            events[(currentEventIndex - 1) % events.size]
+        }
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Top Header: History Icon + "حدث في مثل هذا اليوم" + Date Badge
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = Color(0xFFFBBF24),
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(5.dp))
+                Text(
+                    text = "حدث في مثل هذا اليوم",
+                    color = Color(0xFFFBBF24),
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+
+            Surface(
+                color = Color(0xFFF59E0B).copy(alpha = 0.2f),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text(
+                    text = "${currentEvent.date} (${NumeralFormatter.format(currentEvent.year, useArabicNumerals)})",
+                    color = Color(0xFFFDE68A),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp)
+                )
+            }
+        }
+
+        // Center Box: Event Title & Description
+        Surface(
+            color = Color.Black.copy(alpha = 0.28f),
+            shape = RoundedCornerShape(12.dp),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFF59E0B).copy(alpha = 0.35f)),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp)
+            ) {
+                Text(
+                    text = currentEvent.title,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = currentEvent.description,
+                    color = textColor.copy(alpha = 0.88f),
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+
+        // Bottom Action Bar: Category + Next Event Toggle
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = currentEvent.category,
+                color = textColor.copy(alpha = 0.65f),
+                fontSize = 10.sp,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.weight(1f)
+            )
+
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                // Copy Event
+                IconButton(
+                    onClick = {
+                        val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                        val clip = ClipData.newPlainText("History Event", "${currentEvent.title} (${currentEvent.date} - ${currentEvent.year}):\n${currentEvent.description}")
+                        cm.setPrimaryClip(clip)
+                        Toast.makeText(context, "تم نسخ الحدث التاريخي للحافظة 📋", Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.size(30.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.ContentCopy,
+                        contentDescription = "نسخ الحدث",
+                        tint = textColor.copy(alpha = 0.8f),
+                        modifier = Modifier.size(15.dp)
+                    )
+                }
+
+                // Next Event
+                if (isInteractive) {
+                    IconButton(
+                        onClick = {
+                            currentEventIndex = (currentEventIndex + 1) % (events.size + 1)
+                        },
+                        modifier = Modifier.size(30.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.SkipNext,
+                            contentDescription = "الحدث التالي",
+                            tint = Color(0xFFFBBF24),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
                 }
             }
         }

@@ -100,14 +100,14 @@ class CustomAppWidgetProvider : AppWidgetProvider() {
             val stats = DeviceStatsManager.getDeviceStats(context)
 
             if (config == null) {
-                views.setTextViewText(R.id.widget_title, "WidgetCraft")
-                views.setTextViewText(R.id.widget_badge, "بدون نت")
+                views.setTextViewText(R.id.widget_title, "الثيمات")
+                views.setTextViewText(R.id.widget_badge, "مميّز")
                 views.setTextViewText(R.id.widget_main_value, stats.currentTimeFormatted)
                 views.setTextViewText(R.id.widget_sub_value, "${stats.currentDayNameAr}، ${stats.currentDateAr}")
                 views.setViewVisibility(R.id.widget_action_row, View.GONE)
             } else {
                 views.setTextViewText(R.id.widget_title, config.name)
-                views.setTextViewText(R.id.widget_badge, "بدون نت 100%")
+                views.setTextViewText(R.id.widget_badge, "مميّز")
 
                 when (config.type) {
                     WidgetType.DIGITAL_CLOCK -> {
@@ -199,7 +199,7 @@ class CustomAppWidgetProvider : AppWidgetProvider() {
                     }
                     WidgetType.WEATHER_TEMP -> {
                         views.setTextViewText(R.id.widget_title, "الطقس والحرارة • ${config.cityName}")
-                        views.setTextViewText(R.id.widget_badge, "بدون نت")
+                        views.setTextViewText(R.id.widget_badge, "مميّز")
                         views.setTextViewText(R.id.widget_main_value, "${config.temperatureCelsius}°م")
                         views.setTextViewText(
                             R.id.widget_sub_value,
@@ -235,6 +235,20 @@ class CustomAppWidgetProvider : AppWidgetProvider() {
                     WidgetType.MINIMAL_STAT -> {
                         views.setTextViewText(R.id.widget_main_value, config.noteContent)
                         views.setTextViewText(R.id.widget_sub_value, config.tagline.ifEmpty { "WidgetCraft Minimal" })
+                        views.setViewVisibility(R.id.widget_action_row, View.GONE)
+                    }
+                    WidgetType.DAILY_QURAN_AYAH -> {
+                        views.setTextViewText(R.id.widget_title, "آية قرآنية يومية")
+                        views.setTextViewText(R.id.widget_badge, "${config.quranAyahSurah} : ${config.quranAyahNumber}")
+                        views.setTextViewText(R.id.widget_main_value, "« ${config.quranAyahText} »")
+                        views.setTextViewText(R.id.widget_sub_value, "كل يوم آية مباركة • نفحات إيمانية")
+                        views.setViewVisibility(R.id.widget_action_row, View.GONE)
+                    }
+                    WidgetType.TODAY_IN_HISTORY -> {
+                        views.setTextViewText(R.id.widget_title, "حدث اليوم")
+                        views.setTextViewText(R.id.widget_badge, "${config.historyEventDate} • ${config.historyEventYear}")
+                        views.setTextViewText(R.id.widget_main_value, config.historyEventTitle)
+                        views.setTextViewText(R.id.widget_sub_value, config.historyEventDescription)
                         views.setViewVisibility(R.id.widget_action_row, View.GONE)
                     }
                 }

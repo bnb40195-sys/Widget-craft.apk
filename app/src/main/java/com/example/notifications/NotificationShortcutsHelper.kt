@@ -30,7 +30,7 @@ object NotificationShortcutsHelper {
                 "إختصارات التطبيقات في مركز الإشعارات",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "شريط وصول سريع لتشغيل التطبيقات المفضلة من مركز الإشعارات بدون نت"
+                description = "شريط وصول سريع لتشغيل التطبيقات المفضلة من مركز الإشعارات"
                 setShowBadge(false)
                 enableVibration(false)
                 enableLights(false)

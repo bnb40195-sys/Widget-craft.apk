@@ -10,6 +10,8 @@ enum class WidgetType(val id: String, val titleAr: String, val titleEn: String, 
     ISLAMIC_CALENDAR_CARD("islamic_calendar_card", "التقويم الهجري ومواقيت الصلاة", "Hijri Calendar & Salah Card", "CalendarToday"),
     WEATHER_TEMP("weather_temp", "ويدجت الحرارة والطقس", "Weather & Temperature", "WbSunny"),
     QURAN_AUDIO("quran_audio", "ويدجت القرآن الكريم الصوتي", "Holy Quran Audio Widget", "VolumeUp"),
+    DAILY_QURAN_AYAH("daily_quran_ayah", "آية قرآنية يومية (كل يوم آية)", "Daily Quran Ayah", "MenuBook"),
+    TODAY_IN_HISTORY("today_in_history", "حدث اليوم (تاريخ وإسلاميات)", "Today in History", "History"),
     APP_SHORTCUTS("app_shortcuts", "إختصارات التطبيقات", "App Shortcuts Bar", "Apps"),
     BATTERY_DEVICE("battery_device", "مؤشر البطارية وحالة الجهاز", "Battery & Device Status", "BatteryChargingFull"),
     QUICK_NOTES("quick_notes", "مفكرة وملاحظة سريعة", "Quick Note & Memo", "EditNote"),
@@ -77,6 +79,13 @@ data class WidgetConfig(
     val hijriDayOffset: Int = 0,
     val quranSurahName: String = "سورة الفاتحة",
     val quranReciterName: String = "مشاري راشد العفاسي",
+    val quranAyahText: String = "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+    val quranAyahSurah: String = "سورة الشرح",
+    val quranAyahNumber: Int = 6,
+    val historyEventTitle: String = "فتح مكة المكرمة",
+    val historyEventDate: String = "20 رمضان 8 هـ",
+    val historyEventYear: String = "630 م",
+    val historyEventDescription: String = "أعظم انتصارات المسلمين ودخول الناس في دين الله أفواجاً وتطهير الكعبة المشرفة.",
     val isActiveOnLauncher: Boolean = false,
     val isFavorite: Boolean = false,
     val source: String = "CREATED", // "CREATED", "IMPORTED", "PRESET"
@@ -121,6 +130,13 @@ data class WidgetConfig(
         json.put("hijriDayOffset", hijriDayOffset)
         json.put("quranSurahName", quranSurahName)
         json.put("quranReciterName", quranReciterName)
+        json.put("quranAyahText", quranAyahText)
+        json.put("quranAyahSurah", quranAyahSurah)
+        json.put("quranAyahNumber", quranAyahNumber)
+        json.put("historyEventTitle", historyEventTitle)
+        json.put("historyEventDate", historyEventDate)
+        json.put("historyEventYear", historyEventYear)
+        json.put("historyEventDescription", historyEventDescription)
         json.put("source", "IMPORTED")
         json.put("exportedAt", System.currentTimeMillis())
         return json.toString(2)
@@ -174,6 +190,13 @@ data class WidgetConfig(
                     hijriDayOffset = json.optInt("hijriDayOffset", 0),
                     quranSurahName = json.optString("quranSurahName", "سورة الفاتحة"),
                     quranReciterName = json.optString("quranReciterName", "مشاري راشد العفاسي"),
+                    quranAyahText = json.optString("quranAyahText", "إِنَّ مَعَ الْعُسْرِ يُسْرًا"),
+                    quranAyahSurah = json.optString("quranAyahSurah", "سورة الشرح"),
+                    quranAyahNumber = json.optInt("quranAyahNumber", 6),
+                    historyEventTitle = json.optString("historyEventTitle", "فتح مكة المكرمة"),
+                    historyEventDate = json.optString("historyEventDate", "20 رمضان 8 هـ"),
+                    historyEventYear = json.optString("historyEventYear", "630 م"),
+                    historyEventDescription = json.optString("historyEventDescription", "أعظم انتصارات المسلمين ودخول الناس في دين الله أفواجاً وتطهير الكعبة المشرفة."),
                     isActiveOnLauncher = false,
                     isFavorite = false,
                     source = "IMPORTED",

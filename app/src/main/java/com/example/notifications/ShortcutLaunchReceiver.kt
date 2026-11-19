@@ -36,7 +36,7 @@ class ShortcutLaunchReceiver : BroadcastReceiver() {
                 "Phone" -> Intent(Intent.ACTION_DIAL)
                 "Chat" -> Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_MESSAGING)
                 "Camera" -> Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                "Browser" -> Intent(Intent.ACTION_VIEW, Uri.parse("https://google.com"))
+                "Browser" -> Intent(Intent.ACTION_VIEW, Uri.parse("https://duckduckgo.com"))
                 "Notes" -> Intent(Intent.ACTION_CREATE_NOTE)
                 "Tools" -> Intent(android.provider.Settings.ACTION_SETTINGS)
                 else -> null

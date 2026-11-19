@@ -99,8 +99,8 @@ jobs:
 
           VERSION_NAME="1.0"
           COMMIT_SHA_SHORT=$(git rev-parse --short HEAD 2>/dev/null || echo "latest")
-          OUTPUT_APK="release-artifacts/WidgetCraft-debug-${COMMIT_SHA_SHORT}.apk"
-          LATEST_APK="release-artifacts/WidgetCraft-debug.apk"
+          OUTPUT_APK="release-artifacts/AlThemat-debug-${COMMIT_SHA_SHORT}.apk"
+          LATEST_APK="release-artifacts/AlThemat-debug.apk"
 
           cp "$APK_PATH" "$OUTPUT_APK"
           cp "$APK_PATH" "$LATEST_APK"
@@ -116,7 +116,7 @@ jobs:
       - name: Upload APK as Workflow Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: WidgetCraft-Debug-APK
+          name: AlThemat-Debug-APK
           path: release-artifacts/*.apk
           retention-days: 30
           if-no-files-found: error
@@ -142,37 +142,30 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.release_tag.outputs.tag }}
-          name: "WidgetCraft Pro ${{ steps.release_tag.outputs.tag }}"
+          name: "الثيمات - Al-Themat ${{ steps.release_tag.outputs.tag }}"
           draft: false
           prerelease: false
           files: |
             ${{ steps.prepare_apk.outputs.apk_path }}
             ${{ steps.prepare_apk.outputs.apk_named_path }}
           body: |
-            ### 📱 WidgetCraft Pro - Android Debug APK (${{ steps.release_tag.outputs.tag }})
+            ### 📱 تطبيق الثيمات (Al-Themat) - Android Debug APK (${{ steps.release_tag.outputs.tag }})
 
             Direct downloadable APK built automatically by GitHub Actions from Google AI Studio.
 
             #### 📥 Direct APK Download:
-            - **[Download WidgetCraft-debug.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_tag.outputs.tag }}/WidgetCraft-debug.apk)** (Size: ${{ steps.prepare_apk.outputs.apk_size }})
+            - **[تحميل تطبيق الثيمات AlThemat-debug.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.release_tag.outputs.tag }}/AlThemat-debug.apk)** (الحجم: ${{ steps.prepare_apk.outputs.apk_size }})
             - **Commit**: `${{ steps.prepare_apk.outputs.commit_sha }}`
 
             ---
-            #### ✨ Key Features in this Build:
-            1. **100% Offline Functionality (بدون إنترنت)**: All widgets, custom keyboard themes, and wallpapers work locally without cloud dependency.
-            2. **AI Image-to-Keyboard Studio (لوحة المفاتيح التفاعلية)**:
-               - Upload any image to analyze palette and luminance.
-               - On-device AI generates matching high-contrast keyboard themes.
-               - Full interactive keyboard test pad (Arabic & English layouts, numbers row, haptic feedback, live typing).
-            3. **AI Wallpaper Generator (الخلفيات الذكية)**:
-               - Analyzes image brightness to calculate optimal dimming and contrast so home screen widgets remain crisp.
-            4. **Notification Center App Shortcuts (إختصارات مركز الإشعارات)**:
-               - Persistent quick launch action buttons (Phone, Camera, Messages, Browser, Notes) directly in the Android notification shade.
-               - Interactive switch to turn notification shortcuts on/off and pin/unpin favourite apps.
-            5. **Islamic & Halal Filtered (مفلتر بالكامل)**:
-               - Zero depictions of living beings, animals, or women (pure geometric, landscape, typography, neon, and minimal designs).
-            6. **Online Store Removed**:
-               - Completely replaced with the offline AI Keyboard & Wallpaper Studio.
+            #### ✨ الميزات المكتملة في هذا الإصدار (Key Features):
+            1. **الواجهة الرئيسية الكاملة (Home Dashboard)**: لوحة تحكم عادية غنية مع معاينة الويدجت النشط، آية اليوم المباركة بالصوت، حدث في مثل هذا اليوم، وشبكة الاستوديوهات.
+            2. **محول الأرقام الفوري**: التبديل الفوري بنقرة واحدة بين الأرقام 1234 و ١٢٣٤ على مستوى التطبيق بالكامل.
+            3. **استوديو الذكاء الاصطناعي للوحات المفاتيح والخلفيات**: توليد سمات تفاعلية مستخرجة من ألوان أي صورة مع تجربة كتابة حية.
+            4. **متصفح الويب المدمج ومشغل الفيديو عالي الدقة 1080p**.
+            5. **مركز تنزيل الوسائط والملفات**.
+            6. **إختصارات مركز الإشعارات وتنبيهات الأذان**.
+            7. **مفلتر إسلامياً 100%**: خالٍ تماماً من صور أو تجسيد ذوات الأرواح.
 
             ---
             *Built with Kotlin, Jetpack Compose, and GitHub Actions.*
@@ -186,5 +179,5 @@ jobs:
           echo "- **Commit**: \`${{ steps.prepare_apk.outputs.commit_sha }}\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 📥 How to Download & Install:" >> $GITHUB_STEP_SUMMARY
-          echo "1. **Direct APK (Recommended)**: Go to the **Releases** tab on your GitHub repository to download **WidgetCraft-debug.apk** directly to your phone." >> $GITHUB_STEP_SUMMARY
-          echo "2. **Via Artifacts**: If downloading **WidgetCraft-Debug-APK** from the bottom of this Action page, remember GitHub packs it in a \`.zip\`. You MUST unzip/extract it first using your phone's File Manager before tapping the APK to avoid 'There was a problem parsing the package' error!" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Direct APK (Recommended)**: Go to the **Releases** tab on your GitHub repository to download **AlThemat-debug.apk** directly to your phone." >> $GITHUB_STEP_SUMMARY
+          echo "2. **Via Artifacts**: If downloading from Artifacts, extract the downloaded \`.zip\` on your phone before installing the APK." >> $GITHUB_STEP_SUMMARY

@@ -56,7 +56,7 @@ object PopularAppPresets {
         AppShortcut(name = "الكاميرا", customLabel = "الكاميرا", packageName = "com.google.android.GoogleCamera", iconShape = IconShape.HEXAGON, iconColor = 0xFFF59E0B, iconSymbol = "Camera"),
         AppShortcut(name = "المتصفح كروم", customLabel = "Chrome", packageName = "com.android.chrome", iconShape = IconShape.ROUND, iconColor = 0xFF4285F4, iconSymbol = "Browser"),
         AppShortcut(name = "الملاحظات", customLabel = "ملاحظاتي", packageName = "com.google.android.keep", iconShape = IconShape.SQUIRCLE, iconColor = 0xFFEAB308, iconSymbol = "Notes"),
-        AppShortcut(name = "رابط ويب خارجي", customLabel = "موقع خارجي", externalUrl = "https://google.com", iconShape = IconShape.ROUND, iconColor = 0xFF06B6D4, iconSymbol = "Browser"),
+        AppShortcut(name = "رابط ويب خارجي", customLabel = "موقع خارجي", externalUrl = "https://duckduckgo.com", iconShape = IconShape.ROUND, iconColor = 0xFF06B6D4, iconSymbol = "Browser"),
         AppShortcut(name = "الآلة الحاسبة", customLabel = "حاسبة", packageName = "com.google.android.calculator", iconShape = IconShape.ROUNDED_SQUARE, iconColor = 0xFF6366F1, iconSymbol = "Tools")
     )
 }
@@ -179,8 +179,9 @@ data class WidgetAlert(
     val minute: Int,
     val repeatMode: String = "يومياً", // "يومياً", "مرة واحدة", "أيام العمل"
     val soundEnabled: Boolean = true,
-    val soundId: String = "alert_sound", // "alert_sound", "adhan_chime", "quran_recitation", "hello_chime", "silent"
+    val soundId: String = "alert_sound", // "alert_sound", "adhan_chime", "quran_recitation", "custom_phone_audio", "silent"
     val soundTitle: String = "رنين التنبيه 🔔",
+    val customAudioUri: String? = null,
     val vibrateEnabled: Boolean = true,
     val linkedWidgetId: String? = null,
     val isEnabled: Boolean = true,

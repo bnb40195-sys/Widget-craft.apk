@@ -70,7 +70,7 @@
             android:id="@+id/widget_sub_value"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="100% بدون إنترنت"
+            android:text="ويدجت مميّز"
             android:textColor="#CBD5E1"
             android:textSize="13sp"
             android:maxLines="2"

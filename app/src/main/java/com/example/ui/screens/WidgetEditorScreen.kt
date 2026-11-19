@@ -109,7 +109,7 @@ fun WidgetEditorScreen(
         mutableStateOf(
             baseTemplate ?: allWidgets.find { it.id == widgetId } ?: WidgetConfig(
                 name = "ويدجت جديد مخصص",
-                tagline = "ويدجت صممته بنفسي بدون نت"
+                tagline = "ويدجت صممته بنفسي"
             )
         )
     }
@@ -586,7 +586,7 @@ fun WidgetEditorScreen(
                                                     tint = PrimaryCyan
                                                 )
                                                 Spacer(modifier = Modifier.width(6.dp))
-                                                Text("جلب حكمة عشوائية من المكتبة بدون نت", color = TextPrimary)
+                                                Text("جلب حكمة عشوائية من المكتبة", color = TextPrimary)
                                             }
                                         }
                                     }
@@ -655,7 +655,7 @@ fun WidgetEditorScreen(
 
                             WidgetType.PRAYER_TIMES, WidgetType.ISLAMIC_CALENDAR_CARD -> {
                                 item {
-                                    EditorCard(title = "إعدادات المدينة ومواقيت الصلاة الفلكية (100% بدون نت)") {
+                                    EditorCard(title = "إعدادات المدينة ومواقيت الصلاة الفلكية") {
                                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             Text(
                                                 text = "المدينة المختارة: ${editingConfig.cityName}",
@@ -665,7 +665,7 @@ fun WidgetEditorScreen(
                                             )
 
                                             Text(
-                                                text = "اختر مدينة لحساب الأوقات فلكياً بدون إنترنت:",
+                                                text = "اختر مدينة لحساب الأوقات فلكياً بدقة:",
                                                 fontSize = 12.sp,
                                                 color = TextSecondary
                                             )
@@ -735,7 +735,7 @@ fun WidgetEditorScreen(
 
                             WidgetType.WEATHER_TEMP -> {
                                 item {
-                                    EditorCard(title = "إعدادات الطقس والحرارة (بدون نت)") {
+                                    EditorCard(title = "إعدادات الطقس والحرارة") {
                                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             OutlinedTextField(
                                                 value = editingConfig.cityName,
@@ -810,7 +810,7 @@ fun WidgetEditorScreen(
                                     val context = androidx.compose.ui.platform.LocalContext.current
                                     val isAudioPlaying by com.example.audio.AudioPlaybackManager.isPlaying.collectAsState()
 
-                                    EditorCard(title = "إعدادات ويدجت القرآن الكريم بصوت (بدون نت 100%)") {
+                                    EditorCard(title = "إعدادات ويدجت القرآن الكريم بصوت") {
                                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                                             Text(
                                                 text = "اختر السورة / الآية:",
@@ -916,11 +916,93 @@ fun WidgetEditorScreen(
                                                 shape = RoundedCornerShape(10.dp)
                                             ) {
                                                 Text(
-                                                    text = if (isAudioPlaying) "⏹️ إيقاف التلاوة الحالية" else "▶️ تجربة الاستماع للتلاوة (بدون نت)",
+                                                    text = if (isAudioPlaying) "⏹️ إيقاف التلاوة الحالية" else "▶️ تجربة الاستماع للتلاوة",
                                                     color = DarkBackground,
                                                     fontWeight = FontWeight.Bold
                                                 )
                                             }
+                                        }
+                                    }
+                                }
+                            }
+
+                            WidgetType.DAILY_QURAN_AYAH -> {
+                                item {
+                                    EditorCard(title = "تخصيص آية اليوم (كل يوم آية)") {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            OutlinedTextField(
+                                                value = editingConfig.quranAyahText,
+                                                onValueChange = { editingConfig = editingConfig.copy(quranAyahText = it) },
+                                                label = { Text("نص الآية الكريمة:") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                maxLines = 4,
+                                                colors = editorTextFieldColors()
+                                            )
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                OutlinedTextField(
+                                                    value = editingConfig.quranAyahSurah,
+                                                    onValueChange = { editingConfig = editingConfig.copy(quranAyahSurah = it) },
+                                                    label = { Text("اسم السورة:") },
+                                                    modifier = Modifier.weight(1f),
+                                                    colors = editorTextFieldColors()
+                                                )
+                                                OutlinedTextField(
+                                                    value = editingConfig.quranAyahNumber.toString(),
+                                                    onValueChange = {
+                                                        val num = it.toIntOrNull() ?: 1
+                                                        editingConfig = editingConfig.copy(quranAyahNumber = num)
+                                                    },
+                                                    label = { Text("رقم الآية:") },
+                                                    modifier = Modifier.width(90.dp),
+                                                    colors = editorTextFieldColors()
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            WidgetType.TODAY_IN_HISTORY -> {
+                                item {
+                                    EditorCard(title = "تخصيص حدث اليوم التاريخي والإسلامي") {
+                                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                                            OutlinedTextField(
+                                                value = editingConfig.historyEventTitle,
+                                                onValueChange = { editingConfig = editingConfig.copy(historyEventTitle = it) },
+                                                label = { Text("عنوان الحدث التاريخي:") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                colors = editorTextFieldColors()
+                                            )
+                                            Row(
+                                                modifier = Modifier.fillMaxWidth(),
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                OutlinedTextField(
+                                                    value = editingConfig.historyEventDate,
+                                                    onValueChange = { editingConfig = editingConfig.copy(historyEventDate = it) },
+                                                    label = { Text("التاريخ (هجري / ميلادي):") },
+                                                    modifier = Modifier.weight(1f),
+                                                    colors = editorTextFieldColors()
+                                                )
+                                                OutlinedTextField(
+                                                    value = editingConfig.historyEventYear,
+                                                    onValueChange = { editingConfig = editingConfig.copy(historyEventYear = it) },
+                                                    label = { Text("العام:") },
+                                                    modifier = Modifier.width(90.dp),
+                                                    colors = editorTextFieldColors()
+                                                )
+                                            }
+                                            OutlinedTextField(
+                                                value = editingConfig.historyEventDescription,
+                                                onValueChange = { editingConfig = editingConfig.copy(historyEventDescription = it) },
+                                                label = { Text("تفاصيل ووصف الحدث:") },
+                                                modifier = Modifier.fillMaxWidth(),
+                                                maxLines = 3,
+                                                colors = editorTextFieldColors()
+                                            )
                                         }
                                     }
                                 }
