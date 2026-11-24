@@ -6,6 +6,7 @@ import android.content.Context
 import android.text.format.Formatter
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -81,18 +82,22 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.ai.BrowserAiResponse
+import com.example.data.ai.BrowserAiTaskMode
 import com.example.data.browser.BrowserDownloadOperation
 import com.example.data.browser.BrowserHistoryItem
 import com.example.data.browser.BrowserLanguage
@@ -222,12 +227,24 @@ fun BrowserToolsMenuSheet(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = strings.toolsCenterTitle,
-                        fontSize = 17.sp,
-                        fontWeight = FontWeight.Black,
-                        color = TextPrimary
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_arna_logo),
+                            contentDescription = strings.browserName,
+                            modifier = Modifier
+                                .size(30.dp)
+                                .clip(CircleShape)
+                        )
+                        Text(
+                            text = strings.toolsCenterTitle,
+                            fontSize = 17.sp,
+                            fontWeight = FontWeight.Black,
+                            color = TextPrimary
+                        )
+                    }
                     IconButton(
                         onClick = onDismiss,
                         modifier = Modifier.testTag("browser_tools_close_button")
@@ -487,12 +504,14 @@ fun BrowserAiAssistantSheet(
     aiResponse: BrowserAiResponse?,
     aiNoticeText: String,
     onDismiss: () -> Unit,
-    onAskPrompt: (String) -> Unit,
+    onRunTask: (mode: BrowserAiTaskMode, prompt: String, sourceToEdit: String) -> Unit,
     onSummarizePage: () -> Unit,
     onOpenTranslateSheet: () -> Unit
 ) {
     val context = LocalContext.current
     var promptText by remember { mutableStateOf("") }
+    var selectedMode by remember { mutableStateOf(BrowserAiTaskMode.CREATE) }
+    var editSourceText by remember { mutableStateOf("") }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -562,13 +581,39 @@ fun BrowserAiAssistantSheet(
                     }
                 }
 
-                // Quick Actions Row
+                // Universal Arna ai Mode Chips (Create / Generate / Edit / Summarize / Translate)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    listOf(
+                        BrowserAiTaskMode.CREATE,
+                        BrowserAiTaskMode.GENERATE,
+                        BrowserAiTaskMode.EDIT
+                    ).forEach { mode ->
+                        val isModeSelected = selectedMode == mode
+                        Surface(
+                            onClick = { selectedMode = mode },
+                            shape = RoundedCornerShape(12.dp),
+                            color = if (isModeSelected) AccentPurple.copy(alpha = 0.3f) else CardBgColor,
+                            border = BorderStroke(
+                                1.dp,
+                                if (isModeSelected) AccentPurple else CardBorderColor
+                            ),
+                            modifier = Modifier.testTag("ai_mode_${mode.name.lowercase()}")
+                        ) {
+                            Text(
+                                text = if (language == BrowserLanguage.ENGLISH) mode.titleEn else mode.titleAr,
+                                color = if (isModeSelected) Color(0xFFE9D5FF) else TextSecondary,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                            )
+                        }
+                    }
+
                     Surface(
                         onClick = onSummarizePage,
                         shape = RoundedCornerShape(12.dp),
@@ -605,25 +650,37 @@ fun BrowserAiAssistantSheet(
                             Text(strings.translatePage, color = AccentGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
                         }
                     }
+                }
 
-                    Surface(
-                        onClick = {
-                            val q = strings.extractIdeasPrompt
-                            promptText = q
-                            onAskPrompt(q)
+                if (selectedMode == BrowserAiTaskMode.EDIT) {
+                    OutlinedTextField(
+                        value = editSourceText,
+                        onValueChange = { editSourceText = it },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .testTag("ai_edit_source_input"),
+                        placeholder = {
+                            Text(
+                                text = if (language == BrowserLanguage.ENGLISH) {
+                                    "Paste text or code to edit (optional — defaults to page content)"
+                                } else {
+                                    "ألصق النص أو الكود المراد تعديله (اختياري — يستخدم محتوى الصفحة تلقائياً)"
+                                },
+                                color = TextSecondary,
+                                fontSize = 11.sp
+                            )
                         },
-                        shape = RoundedCornerShape(12.dp),
-                        color = AccentPurple.copy(alpha = 0.16f),
-                        border = BorderStroke(1.dp, AccentPurple.copy(alpha = 0.45f))
-                    ) {
-                        Text(
-                            text = strings.extractIdeas,
-                            color = Color(0xFFD8B4FE),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp)
+                        maxLines = 4,
+                        shape = RoundedCornerShape(14.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color(0xFF0E111B),
+                            unfocusedContainerColor = Color(0xFF0E111B),
+                            focusedBorderColor = PrimaryCyan,
+                            unfocusedBorderColor = CardBorderColor,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
                         )
-                    }
+                    )
                 }
 
                 OutlinedTextField(
@@ -647,7 +704,9 @@ fun BrowserAiAssistantSheet(
 
                 Button(
                     onClick = {
-                        if (promptText.isNotBlank()) onAskPrompt(promptText.trim())
+                        if (promptText.isNotBlank()) {
+                            onRunTask(selectedMode, promptText.trim(), editSourceText.trim())
+                        }
                     },
                     enabled = !isLoading && promptText.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = AccentPurple),

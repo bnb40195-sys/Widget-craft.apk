@@ -28,7 +28,7 @@ enum class BrowserSearchEngine(
     val searchUrl: String,
     val homeUrl: String
 ) {
-    DUCKDUCKGO("duckduckgo", "DuckDuckGo (خصوصية)", "DuckDuckGo (Privacy)", "🛡️", "https://duckduckgo.com/?q=", "https://duckduckgo.com"),
+    DUCKDUCKGO("duckduckgo", "Arna (خصوصية)", "Arna (Privacy)", "🛡️", "https://duckduckgo.com/?q=", "https://duckduckgo.com"),
     BING("bing", "Bing Search", "Bing Search", "🔎", "https://www.bing.com/search?q=", "https://www.bing.com"),
     WIKIPEDIA("wikipedia", "ويكيبيديا الموسوعة", "Wikipedia", "📚", "https://ar.wikipedia.org/w/index.php?search=", "https://ar.wikipedia.org"),
     QURAN("quran", "البحث في القرآن", "Quran Search", "📖", "https://quran.com/search?q=", "https://quran.com");
@@ -36,9 +36,103 @@ enum class BrowserSearchEngine(
     fun displayTitle(language: BrowserLanguage): String =
         if (language == BrowserLanguage.ENGLISH) titleEn else titleAr
 
+    fun buildSearchUrl(query: String, language: BrowserLanguage): String {
+        val encoded = Uri.encode(query)
+        return when (this) {
+            DUCKDUCKGO -> if (language == BrowserLanguage.ARABIC) {
+                "https://duckduckgo.com/?q=$encoded&kl=xa-ar&kad=ar_SA&ia=web"
+            } else {
+                "https://duckduckgo.com/?q=$encoded&kl=us-en&kad=en_US&ia=web"
+            }
+            BING -> if (language == BrowserLanguage.ARABIC) {
+                "https://www.bing.com/search?q=$encoded&setlang=ar&cc=SA"
+            } else {
+                "https://www.bing.com/search?q=$encoded&setlang=en&cc=US"
+            }
+            WIKIPEDIA -> if (language == BrowserLanguage.ARABIC) {
+                "https://ar.wikipedia.org/w/index.php?search=$encoded"
+            } else {
+                "https://en.wikipedia.org/w/index.php?search=$encoded"
+            }
+            QURAN -> if (language == BrowserLanguage.ARABIC) {
+                "https://quran.com/ar/search?q=$encoded"
+            } else {
+                "https://quran.com/en/search?q=$encoded"
+            }
+        }
+    }
+
+    fun homeUrlFor(language: BrowserLanguage): String = when (this) {
+        DUCKDUCKGO -> if (language == BrowserLanguage.ARABIC) {
+            "https://duckduckgo.com/?kl=xa-ar&kad=ar_SA"
+        } else {
+            "https://duckduckgo.com/?kl=us-en&kad=en_US"
+        }
+        BING -> if (language == BrowserLanguage.ARABIC) {
+            "https://www.bing.com/?setlang=ar&cc=SA"
+        } else {
+            "https://www.bing.com/?setlang=en&cc=US"
+        }
+        WIKIPEDIA -> if (language == BrowserLanguage.ARABIC) {
+            "https://ar.wikipedia.org"
+        } else {
+            "https://en.wikipedia.org"
+        }
+        QURAN -> if (language == BrowserLanguage.ARABIC) {
+            "https://quran.com/ar"
+        } else {
+            "https://quran.com/en"
+        }
+    }
+
     companion object {
         fun fromId(id: String?): BrowserSearchEngine =
             entries.firstOrNull { it.id == id } ?: DUCKDUCKGO
+
+        fun buildLanguageHeaders(language: BrowserLanguage): Map<String, String> =
+            if (language == BrowserLanguage.ARABIC) {
+                mapOf("Accept-Language" to "ar-SA,ar;q=0.9,en-US;q=0.4,en;q=0.3")
+            } else {
+                mapOf("Accept-Language" to "en-US,en;q=0.9")
+            }
+
+        fun rewriteSearchUrlForLanguage(url: String, language: BrowserLanguage): String {
+            val uri = runCatching { Uri.parse(url) }.getOrNull() ?: return url
+            val host = uri.host?.lowercase() ?: return url
+            return when {
+                host.contains("duckduckgo.com") -> {
+                    val kl = if (language == BrowserLanguage.ARABIC) "xa-ar" else "us-en"
+                    val kad = if (language == BrowserLanguage.ARABIC) "ar_SA" else "en_US"
+                    val builder = uri.buildUpon().clearQuery()
+                    for (name in uri.queryParameterNames) {
+                        if (name != "kl" && name != "kad") {
+                            uri.getQueryParameter(name)?.let { builder.appendQueryParameter(name, it) }
+                        }
+                    }
+                    builder.appendQueryParameter("kl", kl)
+                    builder.appendQueryParameter("kad", kad)
+                    builder.build().toString()
+                }
+                host.contains("bing.com") -> {
+                    val setlang = if (language == BrowserLanguage.ARABIC) "ar" else "en"
+                    val cc = if (language == BrowserLanguage.ARABIC) "SA" else "US"
+                    val builder = uri.buildUpon().clearQuery()
+                    for (name in uri.queryParameterNames) {
+                        if (name != "setlang" && name != "cc") {
+                            uri.getQueryParameter(name)?.let { builder.appendQueryParameter(name, it) }
+                        }
+                    }
+                    builder.appendQueryParameter("setlang", setlang)
+                    builder.appendQueryParameter("cc", cc)
+                    builder.build().toString()
+                }
+                host.endsWith("wikipedia.org") -> {
+                    val targetHost = if (language == BrowserLanguage.ARABIC) "ar.wikipedia.org" else "en.wikipedia.org"
+                    uri.buildUpon().authority(targetHost).build().toString()
+                }
+                else -> url
+            }
+        }
     }
 }
 
@@ -307,8 +401,8 @@ class BrowserStorageManager(context: Context) {
             val request = DownloadManager.Request(Uri.parse(url)).apply {
                 setTitle(guessedName)
                 setDescription(
-                    if (language == BrowserLanguage.ENGLISH) "Downloading from ARNA Browser"
-                    else "جاري التنزيل من متصفح ARNA"
+                    if (language == BrowserLanguage.ENGLISH) "Downloading from Arna Browser"
+                    else "جاري التنزيل من متصفح Arna"
                 )
                 setMimeType(resolvedMime)
                 setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
@@ -362,6 +456,52 @@ class BrowserStorageManager(context: Context) {
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    fun refreshDownloadStatuses(): List<BrowserDownloadOperation> {
+        val current = loadDownloads()
+        val activeIds = current
+            .filter { it.downloadManagerId > 0L && (it.status == "Downloading" || it.status == "جاري التنزيل") }
+            .map { it.downloadManagerId }
+        if (activeIds.isEmpty()) return current
+
+        val dm = appContext.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager ?: return current
+        val byDmId = current.associateBy { it.downloadManagerId }
+        val updated = mutableMapOf<Long, BrowserDownloadOperation>()
+
+        runCatching {
+            dm.query(DownloadManager.Query().setFilterById(*activeIds.toLongArray()))?.use { cursor ->
+                val colId = cursor.getColumnIndex(DownloadManager.COLUMN_ID)
+                val colStatus = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS)
+                val colBytes = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)
+                val colTotal = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES)
+                val colUri = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                while (cursor.moveToNext()) {
+                    val dmId = if (colId >= 0) cursor.getLong(colId) else -1L
+                    val orig = byDmId[dmId] ?: continue
+                    val st = if (colStatus >= 0) cursor.getInt(colStatus) else DownloadManager.STATUS_PENDING
+                    val bytes = if (colBytes >= 0) cursor.getLong(colBytes).coerceAtLeast(0L) else orig.sizeBytes
+                    val total = if (colTotal >= 0) cursor.getLong(colTotal).coerceAtLeast(0L) else orig.sizeBytes
+                    val uri = if (colUri >= 0) cursor.getString(colUri) else orig.localFilePath
+                    val label = when (st) {
+                        DownloadManager.STATUS_SUCCESSFUL -> "مكتمل 100%"
+                        DownloadManager.STATUS_FAILED -> "فشل التنزيل"
+                        DownloadManager.STATUS_PAUSED -> "متوقف مؤقتاً"
+                        DownloadManager.STATUS_RUNNING -> if (total > 0L) "${((bytes * 100) / total).coerceIn(0, 100)}%" else "جاري التنزيل"
+                        else -> orig.status
+                    }
+                    updated[dmId] = orig.copy(
+                        sizeBytes = if (total > 0L) total else bytes,
+                        status = label,
+                        localFilePath = uri ?: orig.localFilePath
+                    )
+                }
+            }
+        }
+        if (updated.isEmpty()) return current
+        val merged = current.map { updated[it.downloadManagerId] ?: it }
+        saveDownloads(merged)
+        return merged
     }
 
     fun removeDownloadOperation(id: String): List<BrowserDownloadOperation> {

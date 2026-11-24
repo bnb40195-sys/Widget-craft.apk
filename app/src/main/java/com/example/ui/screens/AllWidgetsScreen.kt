@@ -170,30 +170,14 @@ fun AllWidgetsScreen(
             )
         },
         floatingActionButton = {
-            Column(
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // AI Widget Generator shortcut
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.navigateTo(AppScreen.AiImageWidgetStudio) },
-                    containerColor = Color(0xFF8B5CF6),
-                    contentColor = DarkBackground,
-                    icon = { Icon(Icons.Default.AutoAwesome, contentDescription = null) },
-                    text = { Text("توليد بالذكاء الاصطناعي", fontWeight = FontWeight.Bold) },
-                    modifier = Modifier.testTag("btn_all_to_ai_studio")
-                )
-
-                // Create New Widget Button
-                ExtendedFloatingActionButton(
-                    onClick = { viewModel.navigateTo(AppScreen.Editor()) },
-                    containerColor = PrimaryCyan,
-                    contentColor = DarkBackground,
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    text = { Text("صنع ويدجت جديد", fontWeight = FontWeight.Black) },
-                    modifier = Modifier.testTag("btn_create_widget_all_screen")
-                )
-            }
+            ExtendedFloatingActionButton(
+                onClick = { viewModel.navigateTo(AppScreen.Editor()) },
+                containerColor = PrimaryCyan,
+                contentColor = DarkBackground,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("صنع ويدجت جديد", fontWeight = FontWeight.Black) },
+                modifier = Modifier.testTag("btn_create_widget_all_screen")
+            )
         }
     ) { innerPadding ->
         LazyColumn(
@@ -293,16 +277,16 @@ fun AllWidgetsScreen(
                                 color = TextPrimary
                             )
                             Text(
-                                text = "جرب تغيير مصطلح البحث أو الفلتر، أو استخدم استوديو الذكاء الاصطناعي لتحليل أي صورة وتوليد ويدجت فوري مخصص.",
+                                text = "جرب تغيير مصطلح البحث أو الفلتر، أو أنشئ ويدجت جديداً مباشرة.",
                                 fontSize = 12.sp,
                                 color = TextSecondary,
                                 textAlign = TextAlign.Center
                             )
                             Button(
-                                onClick = { viewModel.navigateTo(AppScreen.AiImageWidgetStudio) },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6))
+                                onClick = { viewModel.navigateTo(AppScreen.Editor()) },
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan)
                             ) {
-                                Text("توليد ويدجت بالذكاء الاصطناعي 🪄", color = Color.White, fontWeight = FontWeight.Bold)
+                                Text("صنع ويدجت جديد", color = DarkBackground, fontWeight = FontWeight.Bold)
                             }
                         }
                     }

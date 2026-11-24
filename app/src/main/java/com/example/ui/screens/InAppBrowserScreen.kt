@@ -23,6 +23,7 @@ import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -34,6 +35,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,6 +44,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -63,6 +66,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Refresh
@@ -85,6 +89,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -94,13 +100,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
+import com.example.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -115,6 +126,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.example.data.ai.BrowserAiRepository
 import com.example.data.ai.BrowserAiResponse
+import com.example.data.ai.BrowserAiTaskMode
 import com.example.data.ai.PlaceholderBrowserAiRepository
 import com.example.data.browser.BrowserLanguage
 import com.example.data.browser.BrowserSearchEngine
@@ -160,6 +172,249 @@ private fun isEmulatorEnvironment(): Boolean {
         Build.PRODUCT.contains("simulator")
 }
 
+private fun syncSearchEngineLanguageCookies(language: BrowserLanguage) {
+    runCatching {
+        val cm = CookieManager.getInstance()
+        cm.setAcceptCookie(true)
+        if (language == BrowserLanguage.ARABIC) {
+            cm.setCookie("https://duckduckgo.com", "kl=xa-ar; path=/")
+            cm.setCookie("https://duckduckgo.com", "kad=ar_SA; path=/")
+        } else {
+            cm.setCookie("https://duckduckgo.com", "kl=us-en; path=/")
+            cm.setCookie("https://duckduckgo.com", "kad=en_US; path=/")
+        }
+        cm.flush()
+    }
+}
+
+private fun rebrandSearchEnginePage(
+    view: WebView?,
+    url: String?,
+    language: BrowserLanguage = BrowserLanguage.ARABIC
+) {
+    if (view == null || url.isNullOrBlank()) return
+    val lower = url.lowercase()
+    if (!lower.contains("duckduckgo.com")) return
+    val isArabic = language == BrowserLanguage.ARABIC
+    val js = """
+        (function() {
+            try {
+                var isAr = $isArabic;
+                var arnaSvgMark = '<svg width="46" height="46" viewBox="0 0 96 96" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0;">' +
+                    '<defs><linearGradient id="arnaG" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#22D3EE"/><stop offset="50%" stop-color="#3B82F6"/><stop offset="100%" stop-color="#A855F7"/></linearGradient></defs>' +
+                    '<circle cx="48" cy="48" r="44" fill="#0F172A" stroke="url(#arnaG)" stroke-width="4"/>' +
+                    '<path d="M48 20 L25 70 L35.5 70 L48 41.5 L60.5 70 L71 70 Z" fill="url(#arnaG)"/>' +
+                    '<path d="M37 55 L59 55 L55.5 62 L40.5 62 Z" fill="#FFFFFF"/>' +
+                    '</svg>';
+
+                var arUiMap = {
+                    'all': 'الكل',
+                    'images': 'الصور',
+                    'videos': 'الفيديوهات',
+                    'news': 'الأخبار',
+                    'maps': 'الخرائط',
+                    'shopping': 'التسوق',
+                    'search assist': 'مساعد البحث',
+                    'assist': 'المساعد',
+                    'private': 'خاص',
+                    'region': 'المنطقة',
+                    'all regions': 'كل المناطق',
+                    'safe search': 'البحث الآمن',
+                    'safe search: moderate': 'البحث الآمن: معتدل',
+                    'safe search: strict': 'البحث الآمن: صارم',
+                    'safe search: off': 'البحث الآمن: متوقف',
+                    'moderate': 'معتدل',
+                    'strict': 'صارم',
+                    'off': 'متوقف',
+                    'date': 'التاريخ',
+                    'any time': 'أي وقت',
+                    'past day': 'آخر يوم',
+                    'past week': 'آخر أسبوع',
+                    'past month': 'آخر شهر',
+                    'past year': 'آخر سنة',
+                    'more results': 'المزيد من النتائج',
+                    'results': 'النتائج',
+                    'settings': 'الإعدادات',
+                    'clear': 'مسح',
+                    'search': 'بحث',
+                    'search privately': 'ابحث بخصوصية',
+                    'meanings': 'المعاني',
+                    'definitions': 'التعريفات',
+                    'related searches': 'عمليات بحث ذات صلة'
+                };
+
+                function applyArnaRebrand() {
+                    if (document.documentElement) {
+                        document.documentElement.setAttribute('lang', isAr ? 'ar' : 'en');
+                    }
+
+                    // 1. Hide "Try the DuckDuckGo Browser" / app download promo banners
+                    var candidates = document.querySelectorAll('a, button, div, section, aside');
+                    for (var i = 0; i < candidates.length; i++) {
+                        var el = candidates[i];
+                        if (!el || el.dataset.arnaChecked === '1') continue;
+                        var txt = (el.innerText || '').trim();
+                        if (!txt || txt.length > 90) continue;
+                        if (/try\s+the\s+duckduckgo\s+browser|get\s+the\s+duckduckgo\s+browser|download\s+duckduckgo/i.test(txt)) {
+                            var tag = el.tagName;
+                            if (tag === 'A' || tag === 'BUTTON' || el.children.length <= 4) {
+                                el.style.setProperty('display', 'none', 'important');
+                                el.dataset.arnaChecked = '1';
+                            }
+                        }
+                    }
+
+                    // 2. Replace "Ask Duck.ai" / "Duck.ai" buttons/links/tabs with "Arna ai"
+                    var aiTargets = document.querySelectorAll('a, button, span, div[role="tab"]');
+                    for (var j = 0; j < aiTargets.length; j++) {
+                        var ael = aiTargets[j];
+                        if (!ael || ael.dataset.arnaAiDone === '1') continue;
+                        if (ael.closest('article') || ael.closest('[data-testid="result"]')) continue;
+                        var atxt = (ael.innerText || '').trim();
+                        if (/^(ask\s*)?duck\.ai$/i.test(atxt)) {
+                            ael.dataset.arnaAiDone = '1';
+                            ael.innerHTML = '<span style="display:inline-flex;align-items:center;gap:6px;font-weight:700;color:#C084FC;">&#10024; Arna ai</span>';
+                            var clickTarget = ael.closest('a, button') || ael;
+                            if (clickTarget && !clickTarget.dataset.arnaAiWired) {
+                                clickTarget.dataset.arnaAiWired = '1';
+                                clickTarget.addEventListener('click', function(ev) {
+                                    ev.preventDefault();
+                                    ev.stopPropagation();
+                                    window.location.href = 'arna://open-ai';
+                                }, true);
+                            }
+                        }
+                    }
+
+                    // 3. Replace DuckDuckGo logos (header, nav, AND center homepage SVG/wordmark)
+                    var logoSelectors = [
+                        'header a[href="/"]',
+                        'header a[href*="duckduckgo.com"]',
+                        'nav a[href="/"]',
+                        'main a[href="/"]',
+                        '[data-testid*="logo" i]',
+                        '[class*="logo" i]',
+                        '[class*="Logo" i]',
+                        '[class*="header__logo" i]',
+                        '#logo_homepage_link'
+                    ];
+                    var logos = document.querySelectorAll(logoSelectors.join(','));
+                    for (var k = 0; k < logos.length; k++) {
+                        var logo = logos[k];
+                        if (!logo || logo.dataset.arnaLogoDone === '1') continue;
+                        if (logo.closest('article') || logo.closest('[data-testid="result"]')) continue;
+                        var rect = logo.getBoundingClientRect ? logo.getBoundingClientRect() : null;
+                        if (rect && rect.height > 200) continue;
+                        logo.dataset.arnaLogoDone = '1';
+                        var isLargeCenter = rect && (rect.height >= 44 || logo.closest('main'));
+                        logo.innerHTML = isLargeCenter
+                            ? '<span style="display:inline-flex;align-items:center;justify-content:center;gap:12px;font-family:sans-serif;font-weight:900;font-size:30px;letter-spacing:0.3px;color:#FFFFFF;">' + arnaSvgMark + '<span>Arna</span></span>'
+                            : '<span style="display:inline-flex;align-items:center;gap:8px;font-family:sans-serif;font-weight:900;font-size:20px;letter-spacing:0.3px;color:#FFFFFF;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:linear-gradient(135deg,#22D3EE,#A855F7);"></span>Arna</span>';
+                        logo.style.textDecoration = 'none';
+                    }
+
+                    // 4. Catch any remaining homepage duck SVG emblems or wordmark SVGs inside main/header
+                    var svgs = document.querySelectorAll('main svg, header svg, nav svg');
+                    for (var s = 0; s < svgs.length; s++) {
+                        var svg = svgs[s];
+                        if (!svg || svg.dataset.arnaSvgDone === '1') continue;
+                        if (svg.closest('form') || svg.closest('article') || svg.closest('[data-testid="result"]')) continue;
+                        var sLabel = (svg.getAttribute('aria-label') || svg.textContent || '').toLowerCase();
+                        var sRect = svg.getBoundingClientRect ? svg.getBoundingClientRect() : null;
+                        var looksLikeCenterEmblem = (sRect && sRect.width >= 38 && sRect.height >= 38 && sRect.width <= 260 && sRect.top < 420);
+                        if (sLabel.indexOf('duck') !== -1 || looksLikeCenterEmblem) {
+                            var parentBlock = svg.parentElement;
+                            if (parentBlock && parentBlock.dataset.arnaLogoDone === '1') {
+                                svg.dataset.arnaSvgDone = '1';
+                                continue;
+                            }
+                            svg.dataset.arnaSvgDone = '1';
+                            if (parentBlock && (parentBlock.innerText || '').trim().toLowerCase().indexOf('duckduckgo') !== -1) {
+                                parentBlock.dataset.arnaLogoDone = '1';
+                                parentBlock.innerHTML = '<span style="display:inline-flex;align-items:center;justify-content:center;gap:12px;font-family:sans-serif;font-weight:900;font-size:30px;letter-spacing:0.3px;color:#FFFFFF;">' + arnaSvgMark + '<span>Arna</span></span>';
+                            } else {
+                                svg.outerHTML = arnaSvgMark;
+                            }
+                        }
+                    }
+
+                    // 5. Localize Search UI Chrome (Tabs, Filter bar, Search Assist) when Arabic is selected
+                    if (isAr) {
+                        var chromeBars = document.querySelectorAll('nav, [role="navigation"], [role="tablist"], [class*="zcm" i], [data-testid*="filter" i], [class*="filter" i]');
+                        for (var b = 0; b < chromeBars.length; b++) {
+                            if (chromeBars[b]) chromeBars[b].setAttribute('dir', 'rtl');
+                        }
+                        var inputs = document.querySelectorAll('input[type="text"], input[type="search"]');
+                        for (var ip = 0; ip < inputs.length; ip++) {
+                            var inp = inputs[ip];
+                            inp.setAttribute('dir', 'auto');
+                            var ph = (inp.getAttribute('placeholder') || '').toLowerCase();
+                            if (ph.indexOf('search') !== -1) {
+                                inp.setAttribute('placeholder', 'ابحث بخصوصية...');
+                            }
+                        }
+                        var uiEls = document.querySelectorAll('nav a, nav button, nav span, header a, header button, header span, [role="tab"], [role="button"], [role="menuitem"], [data-testid*="filter" i] span, [data-testid*="filter" i] button, [class*="dropdown" i] a, [class*="dropdown" i] span, button, a');
+                        for (var u = 0; u < uiEls.length; u++) {
+                            var uel = uiEls[u];
+                            if (!uel || uel.dataset.arnaArDone === '1') continue;
+                            if (uel.closest('article') || uel.closest('[data-testid="result"]') || uel.closest('[data-testid="about"]')) continue;
+                            if (uel.children.length > 2) continue;
+                            var rawText = (uel.textContent || '').trim();
+                            var key = rawText.toLowerCase().replace(/\s+/g, ' ');
+                            if (arUiMap[key]) {
+                                uel.dataset.arnaArDone = '1';
+                                // Replace only direct text nodes to keep SVG arrows/icons intact
+                                var replacedTextNode = false;
+                                for (var cn = 0; cn < uel.childNodes.length; cn++) {
+                                    var ch = uel.childNodes[cn];
+                                    if (ch.nodeType === 3 && ch.nodeValue && ch.nodeValue.trim().length > 0) {
+                                        ch.nodeValue = arUiMap[key];
+                                        replacedTextNode = true;
+                                        break;
+                                    }
+                                }
+                                if (!replacedTextNode && uel.children.length === 0) {
+                                    uel.textContent = arUiMap[key];
+                                }
+                            }
+                        }
+                    }
+
+                    // 6. Replace any remaining "DuckDuckGo" text nodes outside results
+                    var walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+                    var node;
+                    while ((node = walker.nextNode())) {
+                        var parent = node.parentElement;
+                        if (!parent || parent.closest('article') || parent.closest('[data-testid="result"]')) continue;
+                        if (node.nodeValue && /DuckDuckGo/i.test(node.nodeValue)) {
+                            node.nodeValue = node.nodeValue.replace(/DuckDuckGo/gi, 'Arna');
+                        }
+                    }
+
+                    if (document.title && /DuckDuckGo/i.test(document.title)) {
+                        document.title = document.title.replace(/DuckDuckGo/gi, 'Arna');
+                    }
+                }
+
+                applyArnaRebrand();
+                if (!window.__arnaObserverAttached && document.body) {
+                    window.__arnaObserverAttached = true;
+                    var timer = null;
+                    var obs = new MutationObserver(function() {
+                        if (timer) return;
+                        timer = setTimeout(function() {
+                            timer = null;
+                            applyArnaRebrand();
+                        }, 100);
+                    });
+                    obs.observe(document.body, { childList: true, subtree: true });
+                }
+            } catch (e) {}
+        })();
+    """.trimIndent()
+    view.evaluateJavascript(js, null)
+}
+
 private enum class BrowserActiveSheet {
     NONE,
     TOOLS,
@@ -183,13 +438,23 @@ fun InAppBrowserScreen(
 
     val storageManager = remember { BrowserStorageManager(context) }
     val aiRepository: BrowserAiRepository = remember { PlaceholderBrowserAiRepository() }
+    val appLanguage by viewModel.appLanguage.collectAsState()
 
-    var settingsState by remember { mutableStateOf(storageManager.loadSettings()) }
+    var settingsState by remember { mutableStateOf(storageManager.loadSettings().copy(language = appLanguage)) }
     val strings = remember(settingsState.language) { browserStringsFor(settingsState.language) }
     val browserLayoutDirection = if (settingsState.language == BrowserLanguage.ARABIC) {
         LayoutDirection.Rtl
     } else {
         LayoutDirection.Ltr
+    }
+
+    LaunchedEffect(appLanguage) {
+        if (settingsState.language != appLanguage) {
+            val synced = settingsState.copy(language = appLanguage)
+            settingsState = synced
+            storageManager.saveSettings(synced)
+        }
+        syncSearchEngineLanguageCookies(appLanguage)
     }
 
     var bookmarks by remember { mutableStateOf(storageManager.loadBookmarks()) }
@@ -292,12 +557,27 @@ fun InAppBrowserScreen(
     }
 
     fun updateSettings(newConfig: BrowserSettingsConfig, reloadIfNeeded: Boolean = false) {
+        val languageChanged = newConfig.language != settingsState.language
         settingsState = newConfig
         storageManager.saveSettings(newConfig)
+        if (languageChanged) {
+            viewModel.syncAppLanguage(newConfig.language)
+            syncSearchEngineLanguageCookies(newConfig.language)
+        }
         webViewRef?.let { wv ->
             applyWebViewSettings(wv, newConfig)
-            if (reloadIfNeeded && !showStartPage) {
-                wv.reload()
+            if ((reloadIfNeeded || languageChanged) && !showStartPage) {
+                val headers = BrowserSearchEngine.buildLanguageHeaders(newConfig.language)
+                val rewritten = if (languageChanged) {
+                    BrowserSearchEngine.rewriteSearchUrlForLanguage(currentUrl, newConfig.language)
+                } else {
+                    currentUrl
+                }
+                if (rewritten != currentUrl) {
+                    currentUrl = rewritten
+                    inputUrlText = rewritten
+                }
+                wv.loadUrl(rewritten, headers)
             }
         }
     }
@@ -312,11 +592,14 @@ fun InAppBrowserScreen(
         val trimmed = rawInput.trim()
         if (trimmed.isEmpty()) return
 
+        syncSearchEngineLanguageCookies(settingsState.language)
         val targetUrl = when {
             trimmed.startsWith("http://", ignoreCase = true) ||
-                trimmed.startsWith("https://", ignoreCase = true) -> trimmed
-            trimmed.contains(".") && !trimmed.contains(" ") -> "https://$trimmed"
-            else -> settingsState.defaultEngine.searchUrl + Uri.encode(trimmed)
+                trimmed.startsWith("https://", ignoreCase = true) ->
+                BrowserSearchEngine.rewriteSearchUrlForLanguage(trimmed, settingsState.language)
+            trimmed.contains(".") && !trimmed.contains(" ") ->
+                BrowserSearchEngine.rewriteSearchUrlForLanguage("https://$trimmed", settingsState.language)
+            else -> settingsState.defaultEngine.buildSearchUrl(trimmed, settingsState.language)
         }
 
         val wasOnStartPage = showStartPage
@@ -325,7 +608,7 @@ fun InAppBrowserScreen(
         currentUrl = targetUrl
         showStartPage = false
         if (!wasOnStartPage) {
-            webViewRef?.loadUrl(targetUrl)
+            webViewRef?.loadUrl(targetUrl, BrowserSearchEngine.buildLanguageHeaders(settingsState.language))
         }
         keyboardController?.hide()
     }
@@ -475,25 +758,25 @@ fun InAppBrowserScreen(
                         )
                     }
 
-                    // Unified Smart Omnibox
-                    OutlinedTextField(
-                        value = inputUrlText,
-                        onValueChange = { inputUrlText = it },
+                    // Unified Smart Omnibox (BasicTextField prevents vertical text clipping)
+                    Surface(
+                        color = Color(0xFF0A0D16),
+                        shape = RoundedCornerShape(24.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            if (settingsState.privateMode) AccentPurple else Color(0xFF262D42)
+                        ),
                         modifier = Modifier
                             .weight(1f)
-                            .height(48.dp)
-                            .testTag("browser_omnibox_input"),
-                        singleLine = true,
-                        placeholder = {
-                            Text(
-                                text = if (settingsState.privateMode) strings.omniboxPrivatePlaceholder else strings.omniboxPlaceholder,
-                                fontSize = 11.sp,
-                                color = TextSecondary.copy(alpha = 0.75f),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        },
-                        leadingIcon = {
+                            .height(44.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
                             Icon(
                                 imageVector = when {
                                     settingsState.privateMode -> Icons.Default.VisibilityOff
@@ -508,8 +791,45 @@ fun InAppBrowserScreen(
                                 },
                                 modifier = Modifier.size(16.dp)
                             )
-                        },
-                        trailingIcon = {
+
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                if (inputUrlText.isEmpty()) {
+                                    Text(
+                                        text = if (settingsState.privateMode) strings.omniboxPrivatePlaceholder else strings.omniboxPlaceholder,
+                                        fontSize = 12.sp,
+                                        color = TextSecondary.copy(alpha = 0.75f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                                    BasicTextField(
+                                        value = inputUrlText,
+                                        onValueChange = { inputUrlText = it },
+                                        singleLine = true,
+                                        textStyle = TextStyle(
+                                            color = TextPrimary,
+                                            fontSize = 13.sp,
+                                            textAlign = TextAlign.Start
+                                        ),
+                                        cursorBrush = SolidColor(PrimaryCyan),
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.Uri,
+                                            imeAction = ImeAction.Go
+                                        ),
+                                        keyboardActions = KeyboardActions(
+                                            onGo = { executeLoadUrl(inputUrlText) }
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .testTag("browser_omnibox_input")
+                                    )
+                                }
+                            }
+
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 if (inputUrlText.isNotBlank()) {
                                     IconButton(
@@ -535,24 +855,8 @@ fun InAppBrowserScreen(
                                     }
                                 }
                             }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            keyboardType = KeyboardType.Uri,
-                            imeAction = ImeAction.Go
-                        ),
-                        keyboardActions = KeyboardActions(
-                            onGo = { executeLoadUrl(inputUrlText) }
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color(0xFF0A0D16),
-                            unfocusedContainerColor = Color(0xFF0A0D16),
-                            focusedBorderColor = if (settingsState.privateMode) AccentPurple else PrimaryCyan,
-                            unfocusedBorderColor = Color(0xFF262D42),
-                            focusedTextColor = TextPrimary,
-                            unfocusedTextColor = TextPrimary
-                        ),
-                        shape = RoundedCornerShape(24.dp)
-                    )
+                        }
+                    }
 
                     // Bookmark toggle button when browsing
                     if (!showStartPage) {
@@ -727,7 +1031,10 @@ fun InAppBrowserScreen(
 
                     // Downloads button with badge
                     IconButton(
-                        onClick = { activeSheet = BrowserActiveSheet.DOWNLOADS },
+                        onClick = {
+                            downloads = storageManager.refreshDownloadStatuses()
+                            activeSheet = BrowserActiveSheet.DOWNLOADS
+                        },
                         modifier = Modifier.testTag("browser_nav_downloads")
                     ) {
                         BadgedBox(
@@ -759,66 +1066,56 @@ fun InAppBrowserScreen(
                 .padding(innerPadding)
         ) {
             if (showStartPage) {
-                // ================= MINIMAL ARNA BROWSER CANVAS =================
+                // ================= SLEEK ARNA START INTERFACE (SCREENSHOT LAYOUT) =================
+                var startQuery by remember { mutableStateOf("") }
+                var startAiMode by remember { mutableStateOf(false) }
+
+                fun submitStartInput() {
+                    val q = startQuery.trim()
+                    if (q.isEmpty()) {
+                        if (startAiMode) {
+                            activeSheet = BrowserActiveSheet.AI_ASSISTANT
+                        }
+                        return
+                    }
+                    if (startAiMode) {
+                        activeSheet = BrowserActiveSheet.AI_ASSISTANT
+                        keyboardController?.hide()
+                        coroutineScope.launch {
+                            aiBusy = true
+                            aiResponse = aiRepository.askAssistant(
+                                prompt = q,
+                                pageTitle = strings.defaultWebTitle,
+                                pageUrl = currentUrl,
+                                pageExcerpt = "",
+                                language = settingsState.language
+                            )
+                            aiBusy = false
+                        }
+                    } else {
+                        executeLoadUrl(q)
+                    }
+                }
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(Color(0xFF0A0E1A), Color(0xFF111728), Color(0xFF0A0D14))
-                            )
-                        )
+                        .background(Color(0xFF0C0E13))
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 16.dp, vertical = 20.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .padding(horizontal = 18.dp, vertical = 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(18.dp)
                 ) {
-                    // Compact ARNA Brand + Quick Language Switcher Row
+                    // Top Canvas Bar: Language Switcher + Top-Right ✨ Arna ai & ☰ Tools
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Surface(
-                                shape = CircleShape,
-                                color = PrimaryCyan.copy(alpha = 0.16f),
-                                border = BorderStroke(1.dp, PrimaryCyan.copy(alpha = 0.4f)),
-                                modifier = Modifier.size(36.dp)
-                            ) {
-                                Box(contentAlignment = Alignment.Center) {
-                                    Icon(
-                                        imageVector = Icons.Default.Public,
-                                        contentDescription = strings.browserName,
-                                        tint = PrimaryCyan,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-                            Column {
-                                Text(
-                                    text = strings.browserName,
-                                    color = TextPrimary,
-                                    fontWeight = FontWeight.Black,
-                                    fontSize = 18.sp,
-                                    letterSpacing = 1.sp
-                                )
-                                Text(
-                                    text = strings.aiName,
-                                    color = AccentPurple,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 11.sp
-                                )
-                            }
-                        }
-
-                        // 1-Tap In-Browser Arabic / English Switcher Pill
+                        // 1-Tap Arabic / English Switcher Pill
                         Surface(
-                            color = Color(0xFF151B2E),
+                            color = Color(0xFF171A22),
                             shape = RoundedCornerShape(20.dp),
-                            border = BorderStroke(1.dp, Color(0xFF28324F)),
+                            border = BorderStroke(1.dp, Color(0xFF2A2F3D)),
                             modifier = Modifier.testTag("browser_start_lang_toggle")
                         ) {
                             Row(
@@ -847,30 +1144,245 @@ fun InAppBrowserScreen(
                                 }
                             }
                         }
-                    }
 
-                    if (bookmarks.isEmpty() && historyItems.isEmpty()) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 64.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        // Top-right ✨ Arna ai + ☰ Menu (matching screenshot)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Public,
-                                contentDescription = null,
-                                tint = PrimaryCyan.copy(alpha = 0.65f),
-                                modifier = Modifier.size(44.dp)
-                            )
-                            Text(
-                                text = strings.startCanvasHint,
-                                color = TextSecondary,
-                                fontSize = 13.sp,
-                                textAlign = TextAlign.Center
-                            )
+                            Surface(
+                                onClick = { activeSheet = BrowserActiveSheet.AI_ASSISTANT },
+                                color = Color.Transparent,
+                                shape = RoundedCornerShape(16.dp),
+                                modifier = Modifier.testTag("start_arna_ai_button")
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(5.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AutoAwesome,
+                                        contentDescription = strings.arnaAiContentDesc,
+                                        tint = AccentAmber,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                    Text(
+                                        text = strings.aiName,
+                                        color = Color(0xFFE5E7EB),
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 13.sp
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = { activeSheet = BrowserActiveSheet.TOOLS },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .testTag("start_canvas_menu_button")
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Menu,
+                                    contentDescription = strings.browserToolsDesc,
+                                    tint = Color(0xFFD1D5DB),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Centered Custom Arna Logo + "Arna" Title
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_arna_logo),
+                            contentDescription = strings.browserName,
+                            modifier = Modifier
+                                .size(62.dp)
+                                .clip(CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = strings.browserName,
+                            color = Color.White,
+                            fontWeight = FontWeight.Black,
+                            fontSize = 30.sp,
+                            letterSpacing = 0.5.sp
+                        )
+                    }
+
+                    // Centered Segmented Toggle: [ 🔍 Search | ✨ Arna ai ]
+                    Box(
+                        modifier = Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Surface(
+                            color = Color(0xFF1B1E26),
+                            shape = RoundedCornerShape(24.dp),
+                            border = BorderStroke(1.dp, Color(0xFF2A2E3B))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Search Tab
+                                Surface(
+                                    onClick = { startAiMode = false },
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = if (!startAiMode) Color(0xFF2D323E) else Color.Transparent,
+                                    modifier = Modifier.testTag("start_mode_search")
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Search,
+                                            contentDescription = strings.searchTabLabel,
+                                            tint = if (!startAiMode) Color.White else TextSecondary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Text(
+                                            text = strings.searchTabLabel,
+                                            color = if (!startAiMode) Color.White else TextSecondary,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+
+                                // Arna ai Tab
+                                Surface(
+                                    onClick = { startAiMode = true },
+                                    shape = RoundedCornerShape(20.dp),
+                                    color = if (startAiMode) Color(0xFF2D323E) else Color.Transparent,
+                                    modifier = Modifier.testTag("start_mode_ai")
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 9.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.AutoAwesome,
+                                            contentDescription = strings.aiTabLabel,
+                                            tint = if (startAiMode) AccentAmber else AccentAmber.copy(alpha = 0.85f),
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                        Text(
+                                            text = strings.aiTabLabel,
+                                            color = if (startAiMode) Color.White else Color(0xFFE5E7EB),
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Rounded Dark Pill Input ("Search privately" / "Ask Arna ai anything...")
+                    Surface(
+                        color = Color(0xFF24272F),
+                        shape = RoundedCornerShape(28.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            if (startAiMode) AccentPurple.copy(alpha = 0.5f) else Color(0xFF323642)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(54.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 18.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier.weight(1f),
+                                contentAlignment = Alignment.CenterStart
+                            ) {
+                                if (startQuery.isEmpty()) {
+                                    Text(
+                                        text = if (startAiMode) strings.askArnaAiHint else strings.searchPrivatelyHint,
+                                        color = Color(0xFF9CA3AF),
+                                        fontSize = 14.sp,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                BasicTextField(
+                                    value = startQuery,
+                                    onValueChange = { startQuery = it },
+                                    singleLine = true,
+                                    textStyle = TextStyle(
+                                        color = Color.White,
+                                        fontSize = 14.sp
+                                    ),
+                                    cursorBrush = SolidColor(if (startAiMode) AccentPurple else PrimaryCyan),
+                                    keyboardOptions = KeyboardOptions(
+                                        imeAction = ImeAction.Search
+                                    ),
+                                    keyboardActions = KeyboardActions(
+                                        onSearch = { submitStartInput() }
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .testTag("start_search_input")
+                                )
+                            }
+
+                            if (startQuery.isNotEmpty()) {
+                                IconButton(
+                                    onClick = { startQuery = "" },
+                                    modifier = Modifier.size(32.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Clear,
+                                        contentDescription = strings.clear,
+                                        tint = Color(0xFF9CA3AF),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+
+                            IconButton(
+                                onClick = { submitStartInput() },
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .testTag("start_search_submit_button")
+                            ) {
+                                Icon(
+                                    imageVector = if (startAiMode) Icons.Default.AutoAwesome else Icons.Default.Search,
+                                    contentDescription = if (startAiMode) strings.aiSend else strings.searchTabLabel,
+                                    tint = if (startAiMode) AccentPurple else Color(0xFF9CA3AF),
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Tagline: "Protection. Privacy. Peace of mind."
+                    Text(
+                        text = strings.taglineText,
+                        color = Color(0xFFE5E7EB),
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp, bottom = 8.dp)
+                    )
 
                     // User's Own Saved Pages (Bookmarks) if any
                     if (bookmarks.isNotEmpty()) {
@@ -1000,10 +1512,21 @@ fun InAppBrowserScreen(
                                         canGoForward = view?.canGoForward() ?: false
                                     }
 
+                                    override fun onPageCommitVisible(view: WebView?, url: String?) {
+                                        super.onPageCommitVisible(view, url)
+                                        if (settingsState.javaScriptEnabled) {
+                                            rebrandSearchEnginePage(view, url, settingsState.language)
+                                        }
+                                    }
+
                                     override fun onPageFinished(view: WebView?, url: String?) {
                                         super.onPageFinished(view, url)
                                         isLoading = false
-                                        val finalTitle = view?.title?.takeIf { it.isNotBlank() } ?: pageTitle
+                                        if (settingsState.javaScriptEnabled) {
+                                            rebrandSearchEnginePage(view, url, settingsState.language)
+                                        }
+                                        val rawTitle = view?.title?.takeIf { it.isNotBlank() }
+                                        val finalTitle = rawTitle?.replace("DuckDuckGo", "Arna", ignoreCase = true) ?: pageTitle
                                         pageTitle = finalTitle
                                         canGoBack = view?.canGoBack() ?: false
                                         canGoForward = view?.canGoForward() ?: false
@@ -1022,6 +1545,10 @@ fun InAppBrowserScreen(
                                         request: WebResourceRequest?
                                     ): Boolean {
                                         val urlStr = request?.url?.toString() ?: return false
+                                        if (urlStr.startsWith("arna://open-ai", ignoreCase = true)) {
+                                            activeSheet = BrowserActiveSheet.AI_ASSISTANT
+                                            return true
+                                        }
                                         return if (urlStr.startsWith("http://", ignoreCase = true) ||
                                             urlStr.startsWith("https://", ignoreCase = true)
                                         ) {
@@ -1082,21 +1609,25 @@ fun InAppBrowserScreen(
                                         isLoading = newProgress < 100
                                         canGoBack = view?.canGoBack() ?: false
                                         canGoForward = view?.canGoForward() ?: false
+                                        if (newProgress >= 80 && settingsState.javaScriptEnabled) {
+                                            rebrandSearchEnginePage(view, view?.url, settingsState.language)
+                                        }
                                     }
 
                                     override fun onReceivedTitle(view: WebView?, title: String?) {
                                         super.onReceivedTitle(view, title)
                                         if (!title.isNullOrBlank()) {
-                                            pageTitle = title
+                                            pageTitle = title.replace("DuckDuckGo", "Arna", ignoreCase = true)
                                         }
                                     }
                                 }
 
+                                syncSearchEngineLanguageCookies(settingsState.language)
                                 val localSnap = pendingLocalHtml
                                 if (localSnap != null) {
                                     loadDataWithBaseURL(null, localSnap.first, "text/html", "UTF-8", null)
                                 } else if (currentUrl.isNotBlank() && currentUrl != "about:blank") {
-                                    loadUrl(currentUrl)
+                                    loadUrl(currentUrl, BrowserSearchEngine.buildLanguageHeaders(settingsState.language))
                                 }
                                 webViewRef = this
                             }
@@ -1149,7 +1680,10 @@ fun InAppBrowserScreen(
                     }
                 },
                 onDownloadCurrentPage = { downloadCurrentPageHtml() },
-                onOpenDownloads = { activeSheet = BrowserActiveSheet.DOWNLOADS },
+                onOpenDownloads = {
+                    downloads = storageManager.refreshDownloadStatuses()
+                    activeSheet = BrowserActiveSheet.DOWNLOADS
+                },
                 onOpenHistory = { activeSheet = BrowserActiveSheet.HISTORY },
                 onOpenBookmarks = { activeSheet = BrowserActiveSheet.BOOKMARKS },
                 onOpenFindInPage = { showFindInPageBar = true },
@@ -1180,12 +1714,14 @@ fun InAppBrowserScreen(
                 aiResponse = aiResponse,
                 aiNoticeText = aiRepository.statusNotice(settingsState.language),
                 onDismiss = { activeSheet = BrowserActiveSheet.NONE },
-                onAskPrompt = { prompt ->
+                onRunTask = { mode, prompt, sourceToEdit ->
                     coroutineScope.launch {
                         aiBusy = true
                         val excerpt = extractVisiblePageText()
-                        aiResponse = aiRepository.askAssistant(
+                        aiResponse = aiRepository.runUniversalTask(
+                            mode = mode,
                             prompt = prompt,
+                            sourceContentToEdit = sourceToEdit,
                             pageTitle = pageTitle,
                             pageUrl = currentUrl,
                             pageExcerpt = excerpt,

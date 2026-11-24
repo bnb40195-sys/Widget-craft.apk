@@ -57,6 +57,16 @@ class StudioPreferencesRepository(private val context: Context) {
         _useArabicNumerals.value = enabled
     }
 
+    private val _appLanguage = MutableStateFlow(
+        com.example.data.browser.BrowserLanguage.fromCode(prefs.getString("app_language", "ar"))
+    )
+    val appLanguage: StateFlow<com.example.data.browser.BrowserLanguage> = _appLanguage.asStateFlow()
+
+    fun setAppLanguage(language: com.example.data.browser.BrowserLanguage) {
+        prefs.edit().putString("app_language", language.code).apply()
+        _appLanguage.value = language
+    }
+
     // ---------------- WALLPAPERS ----------------
     fun setWallpaper(config: WallpaperConfig) {
         prefs.edit()
@@ -101,6 +111,7 @@ class StudioPreferencesRepository(private val context: Context) {
             obj.put("iconShape", s.iconShape.name)
             obj.put("iconColor", s.iconColor)
             obj.put("iconSymbol", s.iconSymbol)
+            obj.put("iconStyle", s.iconStyle)
             obj.put("isDualApp", s.isDualApp)
             obj.put("dualLabel", s.dualLabel)
             obj.put("isHidden", s.isHidden)
@@ -196,8 +207,9 @@ class StudioPreferencesRepository(private val context: Context) {
                         packageName = obj.optString("packageName", ""),
                         externalUrl = obj.optString("externalUrl", ""),
                         iconShape = try { IconShape.valueOf(obj.getString("iconShape")) } catch (e: Exception) { IconShape.ROUND },
-                        iconColor = obj.optLong("iconColor", 0xFF2563EB),
+                        iconColor = obj.optLong("iconColor", 0xFF2D6FE4),
                         iconSymbol = obj.optString("iconSymbol", "App"),
+                        iconStyle = obj.optString("iconStyle", "BARE_LARGE"),
                         isDualApp = obj.optBoolean("isDualApp", false),
                         dualLabel = obj.optString("dualLabel", "مزدوج"),
                         isHidden = obj.optBoolean("isHidden", false),

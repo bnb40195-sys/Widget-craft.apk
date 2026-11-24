@@ -70,6 +70,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
+import com.example.data.browser.BrowserLanguage
 import com.example.data.model.WallpaperConfig
 import com.example.data.model.WallpaperType
 import com.example.ui.AppScreen
@@ -87,8 +91,9 @@ fun SettingsScreen(viewModel: MainViewModel) {
     val is24HourFormat by viewModel.is24HourFormat.collectAsState()
     val wallpaper by viewModel.wallpaper.collectAsState()
     val notificationShortcutsEnabled by viewModel.notificationShortcutsEnabled.collectAsState()
+    val appLanguage by viewModel.appLanguage.collectAsState()
+    val isEn = appLanguage == BrowserLanguage.ENGLISH
 
-    var selectedLanguage by remember { mutableStateOf("العربية") }
     var dimLevel by remember { mutableFloatStateOf(wallpaper.dimLevel) }
     var blurRadius by remember { mutableFloatStateOf(wallpaper.blurRadius) }
 
@@ -104,6 +109,9 @@ fun SettingsScreen(viewModel: MainViewModel) {
         viewModel.navigateBack()
     }
 
+    CompositionLocalProvider(
+        LocalLayoutDirection provides if (isEn) LayoutDirection.Ltr else LayoutDirection.Rtl
+    ) {
     Scaffold(
         containerColor = DarkBackground,
         topBar = {
@@ -111,13 +119,13 @@ fun SettingsScreen(viewModel: MainViewModel) {
                 title = {
                     Column {
                         Text(
-                            text = "إعدادات التطبيق ⚙️",
+                            text = if (isEn) "App Settings ⚙️" else "إعدادات التطبيق ⚙️",
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
                             color = TextPrimary
                         )
                         Text(
-                            text = "تخصيص اللغة، تنسيق الأرقام، المظهر والخلفيات",
+                            text = if (isEn) "Language, numerals, appearance and wallpapers" else "تخصيص اللغة، تنسيق الأرقام، المظهر والخلفيات",
                             fontSize = 11.sp,
                             color = TextSecondary
                         )
@@ -127,7 +135,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
                     IconButton(onClick = { viewModel.navigateBack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "رجوع",
+                            contentDescription = if (isEn) "Back" else "رجوع",
                             tint = Color.White
                         )
                     }
@@ -148,23 +156,27 @@ fun SettingsScreen(viewModel: MainViewModel) {
         ) {
             // Section 1: اللغة (Language)
             item {
-                SettingsSectionCard(title = "اللغة والترجمة (Language)", icon = Icons.Default.Language, iconTint = Color(0xFF38BDF8)) {
+                SettingsSectionCard(
+                    title = if (isEn) "Language & Translation" else "اللغة والترجمة (Language)",
+                    icon = Icons.Default.Language,
+                    iconTint = Color(0xFF38BDF8)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         LanguageOptionPill(
                             title = "العربية (Arabic)",
-                            badge = "افتراضي 🇸🇦",
-                            isSelected = selectedLanguage == "العربية",
-                            onClick = { selectedLanguage = "العربية" },
+                            badge = if (isEn) "Arabic 🇸🇦" else "افتراضي 🇸🇦",
+                            isSelected = appLanguage == BrowserLanguage.ARABIC,
+                            onClick = { viewModel.setAppLanguage(BrowserLanguage.ARABIC) },
                             modifier = Modifier.weight(1f)
                         )
                         LanguageOptionPill(
                             title = "English",
                             badge = "Global 🌐",
-                            isSelected = selectedLanguage == "English",
-                            onClick = { selectedLanguage = "English" },
+                            isSelected = appLanguage == BrowserLanguage.ENGLISH,
+                            onClick = { viewModel.setAppLanguage(BrowserLanguage.ENGLISH) },
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -173,7 +185,11 @@ fun SettingsScreen(viewModel: MainViewModel) {
 
             // Section 2: الأرقام وتنسيق الساعة (Numerals & Clock Format)
             item {
-                SettingsSectionCard(title = "تنسيق الأرقام والساعة", icon = Icons.Default.Dialpad, iconTint = Color(0xFFF59E0B)) {
+                SettingsSectionCard(
+                    title = if (isEn) "Numerals & Clock Format" else "تنسيق الأرقام والساعة",
+                    icon = Icons.Default.Dialpad,
+                    iconTint = Color(0xFFF59E0B)
+                ) {
                     // Arabic vs Western Numerals Toggle
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -182,13 +198,17 @@ fun SettingsScreen(viewModel: MainViewModel) {
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "صيغة الأرقام في كامل التطبيق:",
+                                text = if (isEn) "App Numerals Format:" else "صيغة الأرقام في كامل التطبيق:",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = TextPrimary
                             )
                             Text(
-                                text = if (useArabicNumerals) "الأرقام العربية (١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩ ٠)" else "الأرقام الإنجليزية (1 2 3 4 5 6 7 8 9 0)",
+                                text = if (useArabicNumerals) {
+                                    if (isEn) "Eastern Arabic (١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩ ٠)" else "الأرقام العربية (١ ٢ ٣ ٤ ٥ ٦ ٧ ٨ ٩ ٠)"
+                                } else {
+                                    if (isEn) "Western Numerals (1 2 3 4 5 6 7 8 9 0)" else "الأرقام الإنجليزية (1 2 3 4 5 6 7 8 9 0)"
+                                },
                                 fontSize = 11.sp,
                                 color = if (useArabicNumerals) Color(0xFF38BDF8) else TextSecondary
                             )
@@ -232,13 +252,17 @@ fun SettingsScreen(viewModel: MainViewModel) {
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "نظام عرض التوقيت والساعة:",
+                                text = if (isEn) "Clock Display Format:" else "نظام عرض التوقيت والساعة:",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = TextPrimary
                             )
                             Text(
-                                text = if (is24HourFormat) "نظام 24 ساعة (00:00 - 23:59)" else "نظام 12 ساعة (ص / م)",
+                                text = if (is24HourFormat) {
+                                    if (isEn) "24-hour format (00:00 - 23:59)" else "نظام 24 ساعة (00:00 - 23:59)"
+                                } else {
+                                    if (isEn) "12-hour format (AM / PM)" else "نظام 12 ساعة (ص / م)"
+                                },
                                 fontSize = 11.sp,
                                 color = if (is24HourFormat) Color(0xFF10B981) else TextSecondary
                             )
@@ -258,9 +282,13 @@ fun SettingsScreen(viewModel: MainViewModel) {
 
             // Section 3: الخلفيات والمظهر (Wallpapers & Appearance)
             item {
-                SettingsSectionCard(title = "تخصيص الخلفيات والمظهر", icon = Icons.Default.Wallpaper, iconTint = Color(0xFFA855F7)) {
+                SettingsSectionCard(
+                    title = if (isEn) "Wallpapers & Appearance" else "تخصيص الخلفيات والمظهر",
+                    icon = Icons.Default.Wallpaper,
+                    iconTint = Color(0xFFA855F7)
+                ) {
                     Text(
-                        text = "اختر نمط الخلفية أو ولد خلفية فريدة بالذكاء:",
+                        text = if (isEn) "Choose wallpaper style or customize background:" else "اختر نمط الخلفية أو ولد خلفية فريدة بالذكاء:",
                         fontSize = 12.sp,
                         color = TextSecondary
                     )
@@ -279,7 +307,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
                         ) {
                             Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFFC084FC), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("توليد بالذكاء 🪄", color = Color(0xFFE9D5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(if (isEn) "Wallpaper Studio" else "توليد بالذكاء 🪄", color = Color(0xFFE9D5FF), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
 
                         Button(
@@ -295,7 +323,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
                         ) {
                             Icon(Icons.Default.Image, contentDescription = null, tint = Color(0xFF38BDF8), modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
-                            Text("رفع صورة من الهاتف", color = Color(0xFFBAE6FD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            Text(if (isEn) "Pick Photo" else "رفع صورة من الهاتف", color = Color(0xFFBAE6FD), fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -306,7 +334,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text("مستوى تعتيم الخلفية:", fontSize = 11.sp, color = TextSecondary)
+                        Text(if (isEn) "Background Dim Level:" else "مستوى تعتيم الخلفية:", fontSize = 11.sp, color = TextSecondary)
                         Text("${(dimLevel * 100).toInt()}%", fontSize = 11.sp, color = Color(0xFF38BDF8), fontWeight = FontWeight.Bold)
                     }
                     Slider(
@@ -323,7 +351,11 @@ fun SettingsScreen(viewModel: MainViewModel) {
 
             // Section 4: شريط الإشعارات والمربعات
             item {
-                SettingsSectionCard(title = "اختصارات الإشعارات والمربعات", icon = Icons.Default.Notifications, iconTint = Color(0xFF2563EB)) {
+                SettingsSectionCard(
+                    title = if (isEn) "Notification Shortcuts & Tiles" else "اختصارات الإشعارات والمربعات",
+                    icon = Icons.Default.Notifications,
+                    iconTint = Color(0xFF2563EB)
+                ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -331,13 +363,17 @@ fun SettingsScreen(viewModel: MainViewModel) {
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "تفعيل عناصر مركز الإشعارات الدائم:",
+                                text = if (isEn) "Persistent Notification Bar:" else "تفعيل عناصر مركز الإشعارات الدائم:",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 13.sp,
                                 color = TextPrimary
                             )
                             Text(
-                                text = if (notificationShortcutsEnabled) "نشط ويعرض التطبيقات بلمسة واحدة" else "متوقف حالياً",
+                                text = if (notificationShortcutsEnabled) {
+                                    if (isEn) "Active — launch pinned apps in 1 tap" else "نشط ويعرض التطبيقات بلمسة واحدة"
+                                } else {
+                                    if (isEn) "Currently paused" else "متوقف حالياً"
+                                },
                                 fontSize = 11.sp,
                                 color = if (notificationShortcutsEnabled) Color(0xFF10B981) else TextSecondary
                             )
@@ -357,15 +393,19 @@ fun SettingsScreen(viewModel: MainViewModel) {
 
             // Section 5: حول التطبيق والأمان
             item {
-                SettingsSectionCard(title = "حول التطبيق والأمان", icon = Icons.Default.Info, iconTint = Color(0xFF10B981)) {
+                SettingsSectionCard(
+                    title = if (isEn) "About & Privacy" else "حول التطبيق والأمان",
+                    icon = Icons.Default.Info,
+                    iconTint = Color(0xFF10B981)
+                ) {
                     Text(
-                        text = "WidgetCraft Studio - الإصدار v2.4.0",
+                        text = if (isEn) "Themes Studio - v1.0.0" else "استوديو ثيمات - الإصدار 1.0.0",
                         fontWeight = FontWeight.Bold,
                         fontSize = 13.sp,
                         color = TextPrimary
                     )
                     Text(
-                        text = "يعمل بالكامل بدون اتصال بالإنترنت مع خصوصية 100%، وخالي من أي صور لذوات الأرواح طبقاً للضوابط الشرعية.",
+                        text = if (isEn) "Built with high privacy and geometric-only visuals." else "مصمم بخصوصية عالية، وخالي من أي صور لذوات الأرواح طبقاً للضوابط الشرعية.",
                         fontSize = 11.sp,
                         color = TextSecondary,
                         lineHeight = 16.sp
@@ -373,6 +413,7 @@ fun SettingsScreen(viewModel: MainViewModel) {
                 }
             }
         }
+    }
     }
 }
 

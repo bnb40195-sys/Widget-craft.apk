@@ -306,7 +306,7 @@ object AiImageWidgetAnalyzer {
             detectedSize = preset.targetSize,
             widgetName = preset.labelAr,
             widgetTagline = "مولد بالذكاء الاصطناعي",
-            styleDescription = "نمط ${preset.targetTheme.titleAr} مستخرج بدقة ذكاء اصطناعي ومفلتر 100% بدون أي صور لذوات الأرواح.",
+            styleDescription = "نمط ${preset.targetTheme.titleAr} مستخرج بدقة ذكاء اصطناعي ومفلتر بدون أي صور لذوات الأرواح.",
             isCleanHalalVerified = true,
             generatedConfig = config
         )
@@ -411,7 +411,7 @@ object AiImageWidgetAnalyzer {
             keyBorderColor = keyBorder
         )
 
-        val desc = "تم فحص تدرجات الإضاءة (${if (isLight) "فاتح" else "داكن"})، استخراج ألوان الأزرار والحدود بنسب تباين عالية للقراءة، وضبط التوهج ($styleTitle) بدون اتصال بالإنترنت."
+        val desc = "تم فحص تدرجات الإضاءة (${if (isLight) "فاتح" else "داكن"})، استخراج ألوان الأزرار والحدود بنسب تباين عالية للقراءة، وضبط التوهج ($styleTitle)."
 
         return AiKeyboardAnalysis(
             theme = theme,

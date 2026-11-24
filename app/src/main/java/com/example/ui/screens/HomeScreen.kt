@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -111,11 +112,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.R
 import com.example.data.model.AppShortcut
 import com.example.data.model.IconShape
 import com.example.data.model.PopularAppPresets
@@ -155,6 +158,10 @@ fun HomeScreen(
             ?: OfflineDataProvider.preinstalledTemplates[0]
     }
 
+    val appLanguage by viewModel.appLanguage.collectAsState()
+    val isEn = appLanguage == com.example.data.browser.BrowserLanguage.ENGLISH
+    val pinnedNotificationShortcuts by viewModel.pinnedNotificationShortcuts.collectAsState()
+
     // State dialogs
     var selectedShortcutForAction by remember { mutableStateOf<AppShortcut?>(null) }
     var showAddShortcutDialog by remember { mutableStateOf(false) }
@@ -184,33 +191,25 @@ fun HomeScreen(
                         onClick = { showTopBarWindow = true },
                         modifier = Modifier
                             .padding(start = 4.dp)
-                            .testTag("top_bar_iii_button")
+                            .testTag("top_bar_menu_button")
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(3.5.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            repeat(3) {
-                                Box(
-                                    modifier = Modifier
-                                        .width(2.5.dp)
-                                        .height(18.dp)
-                                        .background(PrimaryCyan, RoundedCornerShape(2.dp))
-                                )
-                            }
-                        }
+                        Icon(
+                            imageVector = Icons.Default.Menu,
+                            contentDescription = "الأقسام",
+                            tint = PrimaryCyan
+                        )
                     }
                 },
                 title = {
                     Column {
                         Text(
-                            text = "الثيمات",
+                            text = "استوديو ثيمات",
                             fontWeight = FontWeight.Black,
-                            fontSize = 20.sp,
+                            fontSize = 19.sp,
                             color = Color.White
                         )
                         Text(
-                            text = "استوديو الثيمات والويدجات المتقدمة",
+                            text = "تصميم وتخصيص الشاشة الرئيسية",
                             fontSize = 10.sp,
                             color = TextSecondary
                         )
@@ -231,18 +230,14 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
                         ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                repeat(3) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(2.dp)
-                                            .height(12.dp)
-                                            .background(PrimaryCyan, RoundedCornerShape(1.dp))
-                                    )
-                                }
-                            }
+                            Icon(
+                                imageVector = Icons.Default.Apps,
+                                contentDescription = null,
+                                tint = PrimaryCyan,
+                                modifier = Modifier.size(15.dp)
+                            )
                             Text(
-                                text = "النافذة",
+                                text = "الأقسام",
                                 color = PrimaryCyan,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 11.sp
@@ -261,70 +256,6 @@ fun HomeScreen(
                     }
                 }
             )
-        },
-        bottomBar = {
-            NavigationBar(
-                containerColor = Color(0xFF161922),
-                tonalElevation = 8.dp
-            ) {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { /* Already on Home */ },
-                    icon = { Icon(Icons.Default.Home, contentDescription = "الرئيسية") },
-                    label = { Text("الرئيسية", fontSize = 11.sp, fontWeight = FontWeight.Bold) },
-                    colors = NavigationBarItemDefaults.colors(
-                        selectedIconColor = PrimaryCyan,
-                        selectedTextColor = PrimaryCyan,
-                        indicatorColor = PrimaryCyan.copy(alpha = 0.18f),
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { viewModel.navigateTo(AppScreen.AllWidgets) },
-                    icon = { Icon(Icons.Default.Widgets, contentDescription = "الثيمات") },
-                    label = { Text("الثيمات", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { viewModel.navigateTo(AppScreen.InAppBrowser()) },
-                    icon = { Icon(Icons.Default.Language, contentDescription = "متصفح ARNA") },
-                    label = { Text("ARNA", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { viewModel.navigateTo(AppScreen.VideoPlayer()) },
-                    icon = { Icon(Icons.Default.Videocam, contentDescription = "الفيديوهات") },
-                    label = { Text("الفيديوهات", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { viewModel.navigateTo(AppScreen.Settings) },
-                    icon = { Icon(Icons.Default.Settings, contentDescription = "الإعدادات") },
-                    label = { Text("الإعدادات", fontSize = 11.sp) },
-                    colors = NavigationBarItemDefaults.colors(
-                        unselectedIconColor = TextSecondary,
-                        unselectedTextColor = TextSecondary
-                    )
-                )
-            }
         }
     ) { innerPadding ->
         LazyColumn(
@@ -531,15 +462,12 @@ fun HomeScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Circular icon preview
-                Surface(
-                    shape = CircleShape,
-                    color = Color(s.iconColor),
-                    modifier = Modifier.size(64.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        ShortcutIconSymbol(s.iconSymbol, Color.White, 28)
-                    }
-                }
+                ShortcutStyledCircleAvatar(
+                    iconColor = Color(s.iconColor),
+                    iconSymbol = s.iconSymbol,
+                    iconStyle = s.iconStyle,
+                    size = 64.dp
+                )
 
                 Spacer(modifier = Modifier.height(12.dp))
                 Text(
@@ -883,91 +811,24 @@ fun HomeScreen(
         )
     }
 
-    // ---------------- EDIT SHORTCUT DIALOG ----------------
+    // ---------------- EDIT SHORTCUT FULL-SCREEN DIALOG (Image 2 Style) ----------------
     if (showEditShortcutDialog != null) {
         val editing = showEditShortcutDialog!!
-        var label by remember { mutableStateOf(editing.displayLabel) }
-        var pkg by remember { mutableStateOf(editing.packageName) }
-        var url by remember { mutableStateOf(editing.externalUrl) }
-        var layerText by remember { mutableStateOf(editing.layerIndex.toString()) }
-
-        AlertDialog(
-            onDismissRequest = { showEditShortcutDialog = null },
-            containerColor = Color(0xFF1E202B),
-            title = {
-                Text(
-                    text = "تعديل تفاصيل الاختصار",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    color = TextPrimary
-                )
+        ShortcutEditorFullScreenDialog(
+            shortcut = editing,
+            isNew = editing.packageName.isBlank() && editing.externalUrl.isBlank() && shortcuts.none { it.id == editing.id },
+            viewModel = viewModel,
+            isEnglish = isEn,
+            useArabicNumerals = useArabicNumerals,
+            isPinnedToNotif = pinnedNotificationShortcuts.contains(editing.id),
+            onDismiss = { showEditShortcutDialog = null },
+            onDelete = { id ->
+                viewModel.deleteShortcut(id)
+                showEditShortcutDialog = null
             },
-            text = {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    OutlinedTextField(
-                        value = label,
-                        onValueChange = { label = it },
-                        label = { Text("اسم الاختصار الظاهر") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PrimaryCyan)
-                    )
-
-                    OutlinedTextField(
-                        value = layerText,
-                        onValueChange = { layerText = it },
-                        label = { Text("رقم الطبقة (Layer Index)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PrimaryCyan)
-                    )
-
-                    OutlinedTextField(
-                        value = pkg,
-                        onValueChange = { pkg = it },
-                        label = { Text("اسم حزمة التطبيق (Package Name)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PrimaryCyan)
-                    )
-
-                    OutlinedTextField(
-                        value = url,
-                        onValueChange = { url = it },
-                        label = { Text("رابط خارجي (Web URL - اختياري)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = PrimaryCyan)
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        val parsedLayer = layerText.toIntOrNull() ?: editing.layerIndex
-                        val updated = editing.copy(
-                            customLabel = label.trim(),
-                            packageName = pkg.trim(),
-                            externalUrl = url.trim(),
-                            layerIndex = parsedLayer
-                        )
-                        viewModel.updateShortcut(updated)
-                        showEditShortcutDialog = null
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
-                ) {
-                    Text("حفظ التعديلات")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showEditShortcutDialog = null }) {
-                    Text("إلغاء", color = TextSecondary)
-                }
+            onSave = { updated ->
+                viewModel.updateShortcut(updated)
+                showEditShortcutDialog = null
             }
         )
     }
@@ -1041,34 +902,15 @@ fun HomeScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Surface(
-                            shape = RoundedCornerShape(10.dp),
-                            color = PrimaryCyan.copy(alpha = 0.18f),
-                            modifier = Modifier.size(38.dp)
-                        ) {
-                            Box(contentAlignment = Alignment.Center) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
-                                    repeat(3) {
-                                        Box(
-                                            modifier = Modifier
-                                                .width(2.5.dp)
-                                                .height(16.dp)
-                                                .background(PrimaryCyan, RoundedCornerShape(2.dp))
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        Spacer(modifier = Modifier.width(10.dp))
                         Column {
                             Text(
-                                text = "نافذة الشريط العلوي",
+                                text = "الأقسام",
                                 fontWeight = FontWeight.Black,
                                 fontSize = 16.sp,
                                 color = Color.White
                             )
                             Text(
-                                text = "الخيارات السريعة والتنقل بين استوديوهات التطبيق",
+                                text = "التنقل السريع بين أقسام التطبيق",
                                 fontSize = 11.sp,
                                 color = TextSecondary
                             )
@@ -1086,15 +928,8 @@ fun HomeScreen(
 
                 Divider(color = Color(0xFF262A3B))
 
-                Text(
-                    text = "الأقسام والاستوديوهات",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 13.sp,
-                    color = TextSecondary
-                )
-
                 DrawerNavigationTile(
-                    title = "متصفح ARNA و ARNA AI 🌐",
+                    title = "المتصفح 🌐",
                     subtitle = "ترجمة، حفظ، تنزيل، سجل وإعدادات متكاملة",
                     icon = Icons.Default.Language,
                     tint = Color(0xFF06B6D4),
@@ -1105,7 +940,18 @@ fun HomeScreen(
                 )
 
                 DrawerNavigationTile(
-                    title = "استوديو الثيمات والويدجات (${NumeralFormatter.formatNumber(allWidgets.size, useArabicNumerals)})",
+                    title = "إختصارات التطبيقات ⚡",
+                    subtitle = "الاختصارات النشطة والغير نشطة وشريط الإشعارات",
+                    icon = Icons.Default.Apps,
+                    tint = Color(0xFF2D6FE4),
+                    onClick = {
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.ShortcutsStudio)
+                    }
+                )
+
+                DrawerNavigationTile(
+                    title = "الويدجات (${NumeralFormatter.formatNumber(allWidgets.size, useArabicNumerals)})",
                     subtitle = "تخصيص وتصميم ويدجات الشاشة الرئيسية",
                     icon = Icons.Default.Widgets,
                     tint = Color(0xFF38BDF8),
@@ -1127,8 +973,8 @@ fun HomeScreen(
                 )
 
                 DrawerNavigationTile(
-                    title = "مشغل الفيديوهات عالي الدقة 🎬",
-                    subtitle = "تشغيل الفيديوهات المحلية والمحملة",
+                    title = "مشغل الفيديوهات 🎬",
+                    subtitle = "تشغيل الروابط والفيديوهات المحلية والمحملة",
                     icon = Icons.Default.Videocam,
                     tint = Color(0xFFEF4444),
                     onClick = {
@@ -1138,8 +984,8 @@ fun HomeScreen(
                 )
 
                 DrawerNavigationTile(
-                    title = "استوديو التنبيهات ومواقيت الصلاة ⏰",
-                    subtitle = "منبهات صلاة وتذكيرات مخصصة",
+                    title = "التنبيهات ⏰",
+                    subtitle = "منبهات وتذكيرات مخصصة",
                     icon = Icons.Default.Alarm,
                     tint = Color(0xFFEAB308),
                     onClick = {
@@ -1149,24 +995,24 @@ fun HomeScreen(
                 )
 
                 DrawerNavigationTile(
-                    title = "لوحة المفاتيح والخلفيات ⌨️",
-                    subtitle = "سمات كيبورد تفاعلية وخلفيات مخصصة",
+                    title = "قسم الخلفيات 🎨",
+                    subtitle = "إضافة من مدير الملفات وتوليد بالذكاء الاصطناعي",
+                    icon = Icons.Default.Wallpaper,
+                    tint = Color(0xFFA855F7),
+                    onClick = {
+                        showTopBarWindow = false
+                        viewModel.navigateTo(AppScreen.WallpaperStudio)
+                    }
+                )
+
+                DrawerNavigationTile(
+                    title = "لوحة المفاتيح الذكية ⌨️",
+                    subtitle = "سمات كيبورد تفاعلية وتخصيص المفاتيح",
                     icon = Icons.Default.Keyboard,
                     tint = Color(0xFF10B981),
                     onClick = {
                         showTopBarWindow = false
                         viewModel.navigateTo(AppScreen.KeyboardStudio)
-                    }
-                )
-
-                DrawerNavigationTile(
-                    title = "تحويل الصور إلى ويدجت 🪄",
-                    subtitle = "استخراج الألوان وتنسيق الويدجت",
-                    icon = Icons.Default.AutoAwesome,
-                    tint = Color(0xFFA855F7),
-                    onClick = {
-                        showTopBarWindow = false
-                        viewModel.navigateTo(AppScreen.AiImageWidgetStudio)
                     }
                 )
 
@@ -1220,19 +1066,12 @@ private fun ShortcutItemTile(
             .padding(vertical = 4.dp)
     ) {
         // Round Circular App Icon matching screenshot
-        Surface(
-            shape = CircleShape,
-            color = Color(shortcut.iconColor),
-            modifier = Modifier.size(56.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                ShortcutIconSymbol(
-                    symbol = shortcut.iconSymbol,
-                    tint = Color.White,
-                    sizeDp = 26
-                )
-            }
-        }
+        ShortcutStyledCircleAvatar(
+            iconColor = Color(shortcut.iconColor),
+            iconSymbol = shortcut.iconSymbol,
+            iconStyle = shortcut.iconStyle,
+            size = 56.dp
+        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -1294,6 +1133,7 @@ private fun DrawerNavigationTile(
     subtitle: String,
     icon: ImageVector,
     tint: Color,
+    customLogoRes: Int? = null,
     onClick: () -> Unit
 ) {
     Card(
@@ -1306,13 +1146,23 @@ private fun DrawerNavigationTile(
             modifier = Modifier.padding(14.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Surface(
-                shape = CircleShape,
-                color = tint.copy(alpha = 0.15f),
-                modifier = Modifier.size(40.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+            if (customLogoRes != null) {
+                Image(
+                    painter = painterResource(id = customLogoRes),
+                    contentDescription = title,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                )
+            } else {
+                Surface(
+                    shape = CircleShape,
+                    color = tint.copy(alpha = 0.15f),
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(imageVector = icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
+                    }
                 }
             }
             Spacer(modifier = Modifier.width(14.dp))

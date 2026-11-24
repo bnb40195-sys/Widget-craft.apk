@@ -1,11 +1,13 @@
 package com.example.ui.screens
 
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,20 +27,23 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.FolderOpen
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -53,6 +58,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -63,15 +69,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.ai.AiImageWidgetAnalyzer
 import com.example.ai.AiWallpaperAnalysis
+import com.example.data.ai.PlaceholderWallpaperAiRepository
+import com.example.data.ai.WallpaperAiRepository
+import com.example.data.ai.wallpaperAiPresets
 import com.example.data.model.WallpaperConfig
 import com.example.data.model.WallpaperType
 import com.example.ui.MainViewModel
-import com.example.ui.components.OfflineStatusBadge
+import com.example.ui.theme.AccentAmber
 import com.example.ui.theme.DarkBackground
 import com.example.ui.theme.DarkBorder
 import com.example.ui.theme.DarkSurface
@@ -79,6 +89,8 @@ import com.example.ui.theme.DarkSurfaceVariant
 import com.example.ui.theme.PrimaryCyan
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
+import kotlinx.coroutines.launch
+import java.io.File
 
 val presetGradients = listOf(
     "سايبر نيون ديب" to listOf(Color(0xFF0F172A), Color(0xFF1E1B4B), Color(0xFF0284C7)),
@@ -96,6 +108,9 @@ fun WallpaperStudioScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val wallpaperAiRepo: WallpaperAiRepository = remember { PlaceholderWallpaperAiRepository() }
+
     BackHandler {
         viewModel.navigateBack()
     }
@@ -108,35 +123,45 @@ fun WallpaperStudioScreen(
     var dimLevel by remember { mutableFloatStateOf(currentWallpaper.dimLevel) }
     var aiAnalysis by remember { mutableStateOf<AiWallpaperAnalysis?>(null) }
 
-    // Modern Zero-Permission Photo Picker with AI Analysis
-    val photoPickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri: Uri? ->
-        if (uri != null) {
-            customUri = uri.toString()
-            selectedType = WallpaperType.EXTERNAL_IMAGE
-            try {
-                val stream = context.contentResolver.openInputStream(uri)
+    var aiPrompt by remember { mutableStateOf("") }
+    var selectedAiStyleId by remember { mutableStateOf(wallpaperAiPresets.first().id) }
+    var isGeneratingAi by remember { mutableStateOf(false) }
+
+    fun applyImportedWallpaperUri(uri: Uri) {
+        customUri = uri.toString()
+        selectedType = WallpaperType.EXTERNAL_IMAGE
+        runCatching {
+            context.contentResolver.openInputStream(uri)?.use { stream ->
                 val bitmap = BitmapFactory.decodeStream(stream)
                 if (bitmap != null) {
                     val analysis = AiImageWidgetAnalyzer.analyzeAndGenerateWallpaper(bitmap, uri.toString())
                     aiAnalysis = analysis
                     dimLevel = analysis.dimLevel
-                    viewModel.showToast("تم تحليل الصورة وضبط التباين الذكي للويدجات (${(analysis.dimLevel * 100).toInt()}%) 🪄")
+                    viewModel.showToast("تم استيراد الصورة وضبط التباين الذكي (${(analysis.dimLevel * 100).toInt()}%)")
                 }
-            } catch (e: Exception) {
-                // fallback
             }
         }
     }
 
-    // Fallback file picker
-    val filePickerLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
+    // Modern Photo Picker (Gallery)
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri: Uri? ->
+        if (uri != null) applyImportedWallpaperUri(uri)
+    }
+
+    // File Manager Picker (OpenDocument with persistable URI permission)
+    val fileManagerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
     ) { uri: Uri? ->
         if (uri != null) {
-            customUri = uri.toString()
-            selectedType = WallpaperType.EXTERNAL_IMAGE
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            }
+            applyImportedWallpaperUri(uri)
         }
     }
 
@@ -148,13 +173,13 @@ fun WallpaperStudioScreen(
                 title = {
                     Column {
                         Text(
-                            text = "استوديو الخلفيات والتصميم",
+                            text = "قسم الخلفيات",
                             fontWeight = FontWeight.Bold,
                             fontSize = 17.sp,
                             color = TextPrimary
                         )
                         Text(
-                            text = "تعديل الخلفيات وتوليدها بالذكاء الاصطناعي",
+                            text = "إضافة من مدير الملفات وتوليد بالذكاء الاصطناعي",
                             fontSize = 11.sp,
                             color = PrimaryCyan
                         )
@@ -166,14 +191,11 @@ fun WallpaperStudioScreen(
                         modifier = Modifier.testTag("btn_back_wallpaper")
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Back",
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "رجوع",
                             tint = TextPrimary
                         )
                     }
-                },
-                actions = {
-                    OfflineStatusBadge(modifier = Modifier.padding(end = 12.dp))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = DarkBackground)
             )
@@ -181,14 +203,13 @@ fun WallpaperStudioScreen(
         bottomBar = {
             Surface(
                 color = DarkSurface,
-                border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder),
+                border = BorderStroke(1.dp, DarkBorder),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        .padding(16.dp)
                 ) {
                     Button(
                         onClick = {
@@ -208,11 +229,7 @@ fun WallpaperStudioScreen(
                             .height(50.dp)
                             .testTag("btn_save_wallpaper")
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Save,
-                            contentDescription = null,
-                            tint = DarkBackground
-                        )
+                        Icon(imageVector = Icons.Default.Save, contentDescription = null, tint = DarkBackground)
                         Spacer(modifier = Modifier.width(6.dp))
                         Text(
                             text = "تطبيق الخلفية وحفظ التعديلات",
@@ -231,13 +248,13 @@ fun WallpaperStudioScreen(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Live Simulated Wallpaper Preview
+            // Live Wallpaper Preview
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, PrimaryCyan.copy(alpha = 0.4f))
+                    border = BorderStroke(1.dp, PrimaryCyan.copy(alpha = 0.4f))
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -250,11 +267,10 @@ fun WallpaperStudioScreen(
                             color = PrimaryCyan
                         )
 
-                        // Preview box with dimming layer
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(160.dp)
+                                .height(180.dp)
                                 .clip(RoundedCornerShape(16.dp))
                                 .background(
                                     if (selectedType == WallpaperType.EXTERNAL_IMAGE && customUri != null) {
@@ -268,20 +284,18 @@ fun WallpaperStudioScreen(
                             if (selectedType == WallpaperType.EXTERNAL_IMAGE && customUri != null) {
                                 AsyncImage(
                                     model = customUri,
-                                    contentDescription = "Wallpaper Preview",
+                                    contentDescription = "معاينة الخلفية",
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
 
-                            // Dimming layer
                             Box(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .background(Color.Black.copy(alpha = dimLevel))
                             )
 
-                            // Sample mockup elements inside
                             Column(
                                 modifier = Modifier
                                     .fillMaxSize()
@@ -293,7 +307,11 @@ fun WallpaperStudioScreen(
                                     shape = RoundedCornerShape(8.dp)
                                 ) {
                                     Text(
-                                        text = if (selectedType == WallpaperType.EXTERNAL_IMAGE) "خلفية خارجية مستوردة 🖼️" else presetGradients[selectedPreset].first,
+                                        text = if (selectedType == WallpaperType.EXTERNAL_IMAGE) {
+                                            "خلفية مخصصة / مولدة"
+                                        } else {
+                                            presetGradients[selectedPreset].first
+                                        },
                                         color = Color.White,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold,
@@ -305,21 +323,9 @@ fun WallpaperStudioScreen(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceEvenly
                                 ) {
-                                    Surface(
-                                        color = Color.White.copy(alpha = 0.25f),
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.size(38.dp)
-                                    ) {}
-                                    Surface(
-                                        color = PrimaryCyan.copy(alpha = 0.35f),
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.size(38.dp)
-                                    ) {}
-                                    Surface(
-                                        color = Color(0xFFA855F7).copy(alpha = 0.35f),
-                                        shape = RoundedCornerShape(12.dp),
-                                        modifier = Modifier.size(38.dp)
-                                    ) {}
+                                    Surface(color = Color.White.copy(alpha = 0.25f), shape = RoundedCornerShape(12.dp), modifier = Modifier.size(38.dp)) {}
+                                    Surface(color = PrimaryCyan.copy(alpha = 0.35f), shape = RoundedCornerShape(12.dp), modifier = Modifier.size(38.dp)) {}
+                                    Surface(color = Color(0xFFA855F7).copy(alpha = 0.35f), shape = RoundedCornerShape(12.dp), modifier = Modifier.size(38.dp)) {}
                                 }
                             }
                         }
@@ -327,27 +333,27 @@ fun WallpaperStudioScreen(
                 }
             }
 
-            // External Image Import & AI Analysis Section
+            // Pick from File Manager or Gallery
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+                    border = BorderStroke(1.dp, DarkBorder)
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(
-                            text = "إضافة صورة وتوليد خلفية بالذكاء الاصطناعي",
+                            text = "إضافة خلفية من مدير الملفات أو المعرض",
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             color = PrimaryCyan
                         )
 
                         Text(
-                            text = "اختر أي صورة ليقوم الذكاء الاصطناعي بحساب نسبة التعتيم المثالية والتباين لحماية العين وجعل الويدجات واضحة.",
+                            text = "اختر أي صورة من مدير الملفات في هاتفك أو من معرض الصور لتعيينها كخلفية رئيسية مع ضبط التباين التلقائي.",
                             fontSize = 12.sp,
                             color = TextSecondary,
                             lineHeight = 18.sp
@@ -358,41 +364,33 @@ fun WallpaperStudioScreen(
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Button(
+                                onClick = { fileManagerLauncher.launch(arrayOf("image/*")) },
+                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .testTag("btn_pick_file_manager_wallpaper")
+                            ) {
+                                Icon(Icons.Default.FolderOpen, contentDescription = null, tint = DarkBackground)
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("مدير الملفات", color = DarkBackground, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+
+                            Button(
                                 onClick = {
                                     photoPickerLauncher.launch(
                                         PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
                                     )
                                 },
-                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan),
+                                colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .weight(1f)
                                     .testTag("btn_pick_photo_wallpaper")
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.AddPhotoAlternate,
-                                    contentDescription = null,
-                                    tint = DarkBackground
-                                )
+                                Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = TextPrimary)
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Text("معرض الصور", color = DarkBackground, fontWeight = FontWeight.Bold)
-                            }
-
-                            Button(
-                                onClick = {
-                                    filePickerLauncher.launch("image/*")
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = DarkSurfaceVariant),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Image,
-                                    contentDescription = null,
-                                    tint = TextPrimary
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("ملفات الهاتف", color = TextPrimary)
+                                Text("معرض الصور", color = TextPrimary, fontSize = 12.sp)
                             }
                         }
 
@@ -400,32 +398,13 @@ fun WallpaperStudioScreen(
                             Surface(
                                 shape = RoundedCornerShape(12.dp),
                                 color = Color(0xFF8B5CF6).copy(alpha = 0.15f),
-                                border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF8B5CF6).copy(alpha = 0.4f)),
+                                border = BorderStroke(1.dp, Color(0xFF8B5CF6).copy(alpha = 0.4f)),
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 Column(modifier = Modifier.padding(12.dp)) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Icon(
-                                            imageVector = Icons.Default.AutoAwesome,
-                                            contentDescription = null,
-                                            tint = Color(0xFF8B5CF6),
-                                            modifier = Modifier.size(18.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(8.dp))
-                                        Text(
-                                            text = aiAnalysis!!.styleTitle,
-                                            fontWeight = FontWeight.Bold,
-                                            fontSize = 12.sp,
-                                            color = Color(0xFFC084FC)
-                                        )
-                                    }
+                                    Text(aiAnalysis!!.styleTitle, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = Color(0xFFC084FC))
                                     Spacer(modifier = Modifier.height(4.dp))
-                                    Text(
-                                        text = aiAnalysis!!.styleDescription,
-                                        fontSize = 11.sp,
-                                        color = TextSecondary,
-                                        lineHeight = 15.sp
-                                    )
+                                    Text(aiAnalysis!!.styleDescription, fontSize = 11.sp, color = TextSecondary, lineHeight = 15.sp)
                                 }
                             }
                         }
@@ -433,114 +412,136 @@ fun WallpaperStudioScreen(
                 }
             }
 
-            // Dedicated AI Wallpaper Generator
+            // AI Wallpaper Generator Card
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = Color(0xFF1E1B4B).copy(alpha = 0.5f)),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.4f))
+                    border = BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.4f))
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.AutoAwesome,
-                                contentDescription = null,
-                                tint = Color(0xFFC084FC),
-                                modifier = Modifier.size(20.dp)
-                            )
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color(0xFFC084FC), modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "توليد خلفيات فنية بالذكاء الاصطناعي 🪄",
+                                text = "توليد الخلفيات بالذكاء الاصطناعي",
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 14.sp,
                                 color = TextPrimary
                             )
                         }
 
-                        Text(
-                            text = "اختر النمط المطلوب ليقوم الذكاء بتوليد مزيج لوني وخلفية متناسقة عالية الدقة فوراً:",
-                            fontSize = 11.sp,
-                            color = TextSecondary
-                        )
-
-                        val aiStyles = listOf(
-                            Triple("زخرفة إسلامية مذهبة 🕌", 1, 0.40f),
-                            Triple("سديم كوني نيون 🌌", 2, 0.35f),
-                            Triple("شفق صحراوي هادئ 🌅", 3, 0.30f),
-                            Triple("زمرد الأورورا الملكي 💎", 4, 0.25f),
-                            Triple("أسود داكن فائق ⚡", 5, 0.15f)
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        // Notice when Firebase is not enabled
+                        Surface(
+                            color = AccentAmber.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(1.dp, AccentAmber.copy(alpha = 0.35f)),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            aiStyles.take(3).forEach { (name, presetIdx, recDim) ->
-                                Surface(
-                                    onClick = {
-                                        selectedType = WallpaperType.PRESET_GRADIENT
-                                        selectedPreset = presetIdx % presetGradients.size
-                                        customUri = null
-                                        dimLevel = recDim
-                                        viewModel.showToast("تم توليد نمط: $name بنجاح 🪄")
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = Color(0xFFA855F7).copy(alpha = 0.2f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f)),
-                                    modifier = Modifier.weight(1f)
+                            Row(modifier = Modifier.padding(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Info, contentDescription = null, tint = AccentAmber, modifier = Modifier.size(16.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(
+                                    text = wallpaperAiRepo.statusNotice(),
+                                    color = Color(0xFFFDE68A),
+                                    fontSize = 11.sp,
+                                    lineHeight = 15.sp
+                                )
+                            }
+                        }
+
+                        OutlinedTextField(
+                            value = aiPrompt,
+                            onValueChange = { aiPrompt = it },
+                            placeholder = { Text("صف الخلفية المطلوبة (مثال: زخرفة هندسية ذهبية، سديم سماوي)...", fontSize = 12.sp) },
+                            maxLines = 2,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFFC084FC),
+                                unfocusedBorderColor = Color(0xFF4C1D95),
+                                focusedTextColor = TextPrimary,
+                                unfocusedTextColor = TextPrimary
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .testTag("wallpaper_ai_prompt_input")
+                        )
+
+                        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            wallpaperAiPresets.chunked(3).forEach { rowPresets ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    Column(
-                                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(text = name, fontSize = 10.sp, color = Color(0xFFE9D5FF), fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                                    rowPresets.forEach { preset ->
+                                        val isPicked = selectedAiStyleId == preset.id
+                                        Surface(
+                                            onClick = { selectedAiStyleId = preset.id },
+                                            shape = RoundedCornerShape(10.dp),
+                                            color = if (isPicked) Color(0xFFA855F7).copy(alpha = 0.35f) else Color(0xFFA855F7).copy(alpha = 0.14f),
+                                            border = BorderStroke(1.dp, if (isPicked) Color(0xFFC084FC) else Color(0xFFA855F7).copy(alpha = 0.35f)),
+                                            modifier = Modifier.weight(1f)
+                                        ) {
+                                            Text(
+                                                text = preset.titleAr,
+                                                fontSize = 10.sp,
+                                                color = Color(0xFFE9D5FF),
+                                                fontWeight = FontWeight.Bold,
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp)
+                                            )
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            aiStyles.drop(3).forEach { (name, presetIdx, recDim) ->
-                                Surface(
-                                    onClick = {
-                                        selectedType = WallpaperType.PRESET_GRADIENT
-                                        selectedPreset = presetIdx % presetGradients.size
-                                        customUri = null
-                                        dimLevel = recDim
-                                        viewModel.showToast("تم توليد نمط: $name بنجاح 🪄")
-                                    },
-                                    shape = RoundedCornerShape(10.dp),
-                                    color = Color(0xFFA855F7).copy(alpha = 0.2f),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFA855F7).copy(alpha = 0.5f)),
-                                    modifier = Modifier.weight(1f)
-                                ) {
-                                    Column(
-                                        modifier = Modifier.padding(vertical = 8.dp, horizontal = 4.dp),
-                                        horizontalAlignment = Alignment.CenterHorizontally
-                                    ) {
-                                        Text(text = name, fontSize = 10.sp, color = Color(0xFFE9D5FF), fontWeight = FontWeight.Bold, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                                    }
+                        Button(
+                            onClick = {
+                                val style = wallpaperAiPresets.firstOrNull { it.id == selectedAiStyleId } ?: wallpaperAiPresets.first()
+                                scope.launch {
+                                    isGeneratingAi = true
+                                    val result = wallpaperAiRepo.generateWallpaper(context, aiPrompt, style)
+                                    customUri = Uri.fromFile(File(result.imageFilePath)).toString()
+                                    selectedType = WallpaperType.EXTERNAL_IMAGE
+                                    dimLevel = result.recommendedDim
+                                    isGeneratingAi = false
+                                    viewModel.showToast("تم توليد خلفية (${result.styleTitle}) بنجاح")
                                 }
+                            },
+                            enabled = !isGeneratingAi,
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9333EA)),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(46.dp)
+                                .testTag("btn_generate_ai_wallpaper")
+                        ) {
+                            if (isGeneratingAi) {
+                                CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("جاري توليد الخلفية...", color = Color.White, fontWeight = FontWeight.Bold)
+                            } else {
+                                Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text("توليد خلفية بالذكاء الاصطناعي", color = Color.White, fontWeight = FontWeight.Bold)
                             }
                         }
                     }
                 }
             }
 
-            // Dimming / Darkness Slider
+            // Dimming Slider
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(18.dp),
                     colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, DarkBorder)
+                    border = BorderStroke(1.dp, DarkBorder)
                 ) {
                     Column(
                         modifier = Modifier.padding(14.dp),
@@ -550,17 +551,8 @@ fun WallpaperStudioScreen(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text(
-                                text = "مستوى تعتيم الخلفية (Dim Level)",
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 13.sp,
-                                color = TextPrimary
-                            )
-                            Text(
-                                text = "${(dimLevel * 100).toInt()}%",
-                                fontWeight = FontWeight.Bold,
-                                color = PrimaryCyan
-                            )
+                            Text("مستوى تعتيم الخلفية (Dim Level)", fontWeight = FontWeight.Bold, fontSize = 13.sp, color = TextPrimary)
+                            Text("${(dimLevel * 100).toInt()}%", fontWeight = FontWeight.Bold, color = PrimaryCyan)
                         }
 
                         Slider(
@@ -579,12 +571,7 @@ fun WallpaperStudioScreen(
 
             // Built-in Gradient Presets
             item {
-                Text(
-                    text = "أو اختر من التدرجات الفنية المدمجة:",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimary
-                )
+                Text("أو اختر من التدرجات الفنية المدمجة:", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
             }
 
             items(presetGradients.size) { index ->
@@ -594,10 +581,7 @@ fun WallpaperStudioScreen(
                 Surface(
                     color = if (isSelected) PrimaryCyan.copy(alpha = 0.15f) else DarkSurface,
                     shape = RoundedCornerShape(14.dp),
-                    border = androidx.compose.foundation.BorderStroke(
-                        width = if (isSelected) 2.dp else 1.dp,
-                        color = if (isSelected) PrimaryCyan else DarkBorder
-                    ),
+                    border = BorderStroke(if (isSelected) 2.dp else 1.dp, if (isSelected) PrimaryCyan else DarkBorder),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
@@ -628,11 +612,7 @@ fun WallpaperStudioScreen(
                         }
 
                         if (isSelected) {
-                            Icon(
-                                imageVector = Icons.Default.Check,
-                                contentDescription = null,
-                                tint = PrimaryCyan
-                            )
+                            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = PrimaryCyan)
                         }
                     }
                 }

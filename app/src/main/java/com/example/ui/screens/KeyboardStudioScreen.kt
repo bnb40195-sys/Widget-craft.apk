@@ -444,7 +444,7 @@ fun KeyboardStudioScreen(
                                                 color = if (isSelected) PrimaryCyan else TextPrimary
                                             )
                                             Text(
-                                                text = if (theme.backgroundImageUri != null) "سمة ذكاء اصطناعي بخلفية صورة 🪄" else if (theme.isCustomImported) "سمة مخصصة" else "سمة مدمجة",
+                                                text = if (theme.backgroundImageUri != null) "سمة ذكاء اصطناعي مخصصة 🪄" else if (theme.isCustomImported) "سمة مخصصة" else "سمة مدمجة",
                                                 fontSize = 11.sp,
                                                 color = TextSecondary
                                             )
@@ -514,7 +514,7 @@ fun KeyboardStudioScreen(
                                     }
 
                                     Text(
-                                        text = "اختر صورة من هاتفك: سيقوم الذكاء الاصطناعي بتحليل الألوان بدقة، حساب تباين المفاتيح للقراءة المريحة، وتوليد سمة لوحة مفاتيح تفاعلية جاهزة للكتابة فوراً بدون اتصال بالإنترنت.",
+                                        text = "اختر صورة من هاتفك: سيقوم الذكاء الاصطناعي بتحليل الألوان بدقة، حساب تباين المفاتيح للقراءة المريحة، وتوليد سمة لوحة مفاتيح تفاعلية جاهزة للكتابة فوراً.",
                                         fontSize = 12.sp,
                                         color = TextSecondary,
                                         lineHeight = 17.sp
@@ -549,7 +549,7 @@ fun KeyboardStudioScreen(
                                         horizontalArrangement = Arrangement.SpaceBetween
                                     ) {
                                         Text(
-                                            text = "استخدام صورتك كخلفية مباشرة للوحة المفاتيح",
+                                            text = "تطبيق مظهر الصورة على مفاتيح اللوحة",
                                             fontSize = 12.sp,
                                             color = TextPrimary
                                         )
@@ -612,7 +612,7 @@ fun KeyboardStudioScreen(
                                                 shape = RoundedCornerShape(6.dp)
                                             ) {
                                                 Text(
-                                                    text = "مطابق للسمة 100%",
+                                                    text = "مطابق للسمة",
                                                     color = Color(0xFF34D399),
                                                     fontSize = 10.sp,
                                                     fontWeight = FontWeight.Bold,
@@ -633,7 +633,7 @@ fun KeyboardStudioScreen(
                                             modifier = Modifier.fillMaxWidth(),
                                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                                         ) {
-                                            PaletteChip(label = "الخلفية", hex = analysis.dominantHex, color = Color(analysis.theme.backgroundColor), modifier = Modifier.weight(1f))
+                                            PaletteChip(label = "الإطار", hex = analysis.dominantHex, color = Color(analysis.theme.backgroundColor), modifier = Modifier.weight(1f))
                                             PaletteChip(label = "المفاتيح", hex = analysis.keyHex, color = Color(analysis.theme.keyColor), modifier = Modifier.weight(1f))
                                             PaletteChip(label = "الحروف", hex = analysis.textHex, color = Color(analysis.theme.textColor), modifier = Modifier.weight(1f))
                                             PaletteChip(label = "النيون", hex = analysis.accentHex, color = Color(analysis.theme.accentColor), modifier = Modifier.weight(1f))

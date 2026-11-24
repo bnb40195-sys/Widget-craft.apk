@@ -18,8 +18,9 @@ data class AppShortcut(
     val packageName: String = "",
     val externalUrl: String = "",
     val iconShape: IconShape = IconShape.ROUND,
-    val iconColor: Long = 0xFF2563EB,
-    val iconSymbol: String = "App", // "Phone", "Chat", "Camera", "Browser", "Music", "Tools", "Notes", "Dual", "Link", "Code", "Terminal", "Settings", "Calendar", "Tiles", "Clock", "Translate", "Shield", "Injector"
+    val iconColor: Long = 0xFF2D6FE4,
+    val iconSymbol: String = "App",
+    val iconStyle: String = "BARE_LARGE",
     val isDualApp: Boolean = false,
     val dualLabel: String = "نسخة 2",
     val isHidden: Boolean = false,
@@ -29,9 +30,9 @@ data class AppShortcut(
 ) {
     val displayLabel: String get() = customLabel.ifBlank { name }
     val isExternalSource: Boolean get() = externalUrl.isNotBlank() || (packageName.isNotBlank() && !packageName.startsWith("com.example"))
-    fun getLayerLabel(useArabicNumerals: Boolean = false): String {
+    fun getLayerLabel(useArabicNumerals: Boolean = false, isEnglish: Boolean = false): String {
         val numStr = com.example.util.NumeralFormatter.formatNumber(layerIndex, useArabicNumerals)
-        return "(طبقة $numStr)"
+        return if (isEnglish) "(Layer $numStr)" else "(طبقة $numStr)"
     }
 }
 

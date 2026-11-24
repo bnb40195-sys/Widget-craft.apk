@@ -74,8 +74,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val vaultPin = studioPrefs.vaultPin
     val notificationShortcutsEnabled = studioPrefs.notificationShortcutsEnabled
     val pinnedNotificationShortcuts = studioPrefs.pinnedNotificationShortcuts
+    private val browserStorage = com.example.data.browser.BrowserStorageManager(application)
+
     val is24HourFormat = studioPrefs.is24HourFormat
     val useArabicNumerals = studioPrefs.useArabicNumerals
+    val appLanguage = studioPrefs.appLanguage
 
     fun toggle24HourFormat(enabled: Boolean) {
         studioPrefs.set24HourFormat(enabled)
@@ -87,6 +90,27 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val next = !current
         studioPrefs.setUseArabicNumerals(next)
         showToast(if (next) "تم تفعيل الأرقام العربية (١٢٣٤) في كامل التطبيق 🔢" else "تم تفعيل الأرقام الإنجليزية (1234) في كامل التطبيق 🔢")
+    }
+
+    fun syncAppLanguage(language: com.example.data.browser.BrowserLanguage) {
+        if (studioPrefs.appLanguage.value != language) {
+            studioPrefs.setAppLanguage(language)
+        }
+        val currentBrowser = browserStorage.loadSettings()
+        if (currentBrowser.language != language) {
+            browserStorage.saveSettings(currentBrowser.copy(language = language))
+        }
+    }
+
+    fun setAppLanguage(language: com.example.data.browser.BrowserLanguage) {
+        syncAppLanguage(language)
+        showToast(
+            if (language == com.example.data.browser.BrowserLanguage.ENGLISH) {
+                "Language applied: English 🌐"
+            } else {
+                "تم تطبيق اللغة العربية في المتصفح والتطبيق 🌐"
+            }
+        )
     }
 
     private val _searchQuery = MutableStateFlow("")
